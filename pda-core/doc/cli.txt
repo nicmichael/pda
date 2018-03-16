@@ -1,0 +1,37 @@
+Command Line Use
+================
+
+PDA is also capable of plotting files directly from the command line.
+
+Usage::
+
+  pda.sh [-v] -p pngfile [dim] -f files... -s series...
+        -v        verbose
+        pngfile   filename of image to plot
+        dim       dimension of image (default: 1024x768)
+        files...  files to plot (use 'file@parser' to specify parser class to use)
+        series... series to plot (regular expressions matching series names)
+
+Specify a list of files to be parsed, and a list of series from these files to be plotted.
+The parser for each file will be automatically selected based on the best matching parser.
+To override the parser selection for a file, append *@parserclass` to the filename, where *parserclass*
+is the class name of the parser to be used.
+
+Examples
+--------
+
+To plot the *usr* and *sys* time from *vmstat.log* to a file *vmstat.png*::
+
+  pda.sh -p vmstat.png -f vmstat.log -s usr sys
+
+For the same plot with an image size of 800x600 pixel::
+
+  pda.sh -p vmstat.png 800x600 -f vmstat.log -s usr sys
+
+To plot the *r/s* and *w/s* series from all disks in all iostat output files::
+
+  pda.sh -p iostat.png -f iostat*.out -s disk:.*:[rw]/s
+
+To plot cpu time (series that *end* with "cpu") and disk reads and writes from two different files::
+
+  pda.sh -p plot.png -f vmstat.out iostat.out -s cpu$ all::[rw]/s

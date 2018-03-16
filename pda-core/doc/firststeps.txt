@@ -1,0 +1,165 @@
+First Steps with PDA
+====================
+
+Start PDA by running::
+  ./pda.sh
+
+Configure a Project
+-------------------
+
+PDA organizes data in *projects* and automatically starts with an empty project.
+You can add data to a project, save it with all its settings and later reload it.
+
+Add Files to your Project
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Click on *Configure Project* and select the *file open* symbol. Then select the
+file you would like to open, for example an iostat output file. PDA automatically
+tries to determine which parser might be capable of reading that file. This decision
+is mostly based on filenames, so don't worry if PDA doesn't auto-detect the parser.
+In the drop-down list, now select the parser to read this file and click ok.
+
+Your file now appears in the *Files* section of the project. You may add as many files
+as you like. To delete the file again, click the *trash* icon, or click *Settings* to
+configure attributes of the parser.
+
+Select the Series to display
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each parser provides the data in form of series, organized into categories and
+subcategories. Each series's a name is a tuple of the form *parser:category:subcategory:series*.
+To select a series, click on the *Select Series* button and add a few series from the available
+series section. If there are no series available, the parser might not have been able to read 
+your file. By typing in a pattern in the *Filter* field, you can filter for specific series (this
+fields supports regular expressions). Now click OK.
+
+Depending on the parser, PDA typically reads your series data only after selecting a series,
+so this might take a few seconds.
+
+In the *Series* section of the project you can now see all your selected series. PDA has 
+automatically assigned a color to each of them. Behind their name, PDA displays the total
+number of samples and the automatically assigned value range (y-axis). 
+
+Configuring Series
+^^^^^^^^^^^^^^^^^^
+
+Click on the *Settings* button of a series to change its name, its value range, or its color.
+Series data can be shown as curves using lines, but can also be displayed as impulses (vertical
+lines, which are usually used for event data) or dots or points for non-contiguous data.
+You may also change its line style and whether to use a linear or logarithmic y-axis.
+The *Smooth* field allows you to smooth the curve using an moving average, which is especially
+helpful if you have used a very short sampling interval and the curve is very unsteady.
+
+The arrow up and down buttons behind the series allow you to move it up and down in the order.
+
+Configuring Groups
+^^^^^^^^^^^^^^^^^^
+
+Often you may want to group series. For example, mpstat gives you per-strand cpu data, but
+you may want to group all series from one core to get per-core data, or group them  on a 
+per-socket basis. In the same way, you could group aggregate activity from multiple disks,
+network interfaces, or any other source. To create and configure groups, click *Configure
+Groups* on the project dialog.
+
+In the upper part of the window, you can create or delete groups, and in the lower part
+assign members to a group or remove them from a group. Members can be series from any
+parser. For each group, you can select an aggregation function to use to aggregate values
+from the members. For example, to aggregate context switches from mpstat on a per-core basis,
+you would usually select *Sum* to add them up, which for user cpu time, you would use *Average*
+to calculate their average across all strands.
+
+Ideally the timestamps of your group members are all aligned. Per default PDA uses a
+tolerance of one seconds to aggregate samples from all members within the same second
+into a common sample.
+
+Alter clicking *OK*, the group will be available as a special series with a parser name *group*.
+You can select your group by clicking *Select Series* and searching for series starting with *group*.
+Groups behave like any other series and can be configured in the very same way.
+
+Setting a Title
+^^^^^^^^^^^^^^^
+
+The title you enter on the project dialog will appear in your graph as a title.
+
+To display all selected series, close the project dialog by clicking *OK*.
+
+Plotting Series in a Graph
+--------------------------
+
+The main window shows a graph of all your selected series. The top of the graph lists all
+series and their value ranges on the y-axis. *[0; 100]* means that values of this series
+will be scaled between 0 and 100 on the y-axis. Any series can use individual scales. Up
+to 4 y-axis are shown on the left an right. If you're using more than 4 different scales,
+no further y-axis will be displayed, but data will still be scaled according to the range
+you have configured.
+
+The x-axis shows time. Depending on your overall time range, days, hours, and or minutes
+are shown as units.
+
+Zoom in and out
+^^^^^^^^^^^^^^^
+
+Just drag a rectangle with the mouse on any part of the graph, and PDA will zoom into
+that range. Please note that zooming just affects the x-axis, even though you have
+drawn a rectangle with the mouse. The y-axis is always kept constant.
+
+To zoom out again, click the *Reset Zoom* button on the right.
+
+Find your Series
+^^^^^^^^^^^^^^^^
+
+See that one curve that has this severe drop? If you have added lots of curve, it might
+be tricky to figure out which curve that actually is, especially if you have many curves
+of similar or identical color. No worries! Just move your mouse over the series names on
+the right side of the window, and PDA will highlight each of the series for you. This way
+you can easily identify any series in the graph.
+
+The small configure icon next to the series name directly takes you to the series
+configuration dialog.
+
+Series Statistics
+^^^^^^^^^^^^^^^^^
+
+Now that you have displayed your data, you might want to get some statistics for the
+displayed series. Just click the *Statistics* button on the right to get statistics
+for all series, or any of the series buttons on the right to get individual statistics
+for a single series.
+
+Statistics are always calculated for the zoom range you're currently using. That
+means, if you zoom into a certain time period, only statistics for this period will
+be calculated.
+
+PDA calculates mininum, average and maximum values for the samples of each series 
+in that range, as well as variance and standard deviation. It also prints the number
+of samples found in that range, as well as the minimum, average, and maximum distance
+between any two samples in that interval.
+
+Adding Labels
+^^^^^^^^^^^^^
+
+To annotate your data, you may want to add some labels to your graph. Just click
+*Add Label* on the right and enter a text. With the mouse, you can drag the label
+to any position in the graph. Clicking on the label again allows you to edit the
+text. By deleting the text, you can delete the label.
+
+Labels use a fixed position and are not affected by zooming. Once you zoom in or
+out, the labels will remain on the screen where they are.
+
+Printing and Saving the Graph
+-----------------------------
+
+To print the graph, just click *Print Image*. To save it as a PNG image, click
+*Save Image*. Both printing and saving will use the resolution as shown on the
+screen. By maximizing your PDA window, you will create a larger image, and if
+you make your window small, your image will be smaller.
+
+Saving and Loading Projects
+---------------------------
+
+If you're done, you can save your project. This will save all settings of your
+project: your selected series, their properties, the groups you have created,
+the labels you put into the graph... To save a project, select *Save* or *Save as*
+from the *Project* menu. Note that your raw data files will not be saved as part
+of the project, and will be needed to open the project again.
+
+To open a previously saved project, just select *Open* from the *Project* menu.

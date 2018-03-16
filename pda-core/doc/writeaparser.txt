@@ -1,0 +1,292 @@
+Write your own Parser
+=====================
+
+PDA comes with parsers for some common formats, but you might have your own data
+that PDA cannot (yet) parse. Nothing to worry, you can write your own parser!
+
+Implement a Parser
+------------------
+
+In order to implement a parser, you need to extend the class::
+  de.nmichael.pda.data.Parser
+
+A parser must implement at least the following four methods:
+* A constructor, calling *super(parsername)*, setting up a description of the
+  supported file formats of this parser, and optionally setting parser parameters.
+* A method *boolean canHandle(String filename)* that should return *true* if
+  the parser believes it can handle this file
+* A method *void createAllSeries()* that is called by PDA after the parser has
+  been created and before parsing, which should internally create all series
+  offered by the parser
+* A method *void parse()* which parses the selected series and adds their samples
+  to the internally created series structures.
+
+Simple Parser Example
+---------------------
+
+The following parser serves as a simple example to demonstrate how to implement
+a parser.::
+
+  package de.nmichael.pda.demo;
+
+  import de.nmichael.pda.data.*;
+  import java.util.regex.*;
+  import java.util.*;
+  import java.io.*;
+
+  /*
+   * A parser must extend PDA's abstract Parser class
+   * de.nmichael.pda.data.Parser
+   */
+  public class DemoParser extends Parser {
+    
+    /*
+     * The file format this demo parser will parse looks like this:
+     * 
+     * Statistics Data
+     * foo:bar=123
+     * asd:qwe=456
+     * Statistics Data
+     * foo:bar=987
+     * asd:qwe=876
+     * Statistics Data
+     * foo:bar=234
+     * asd:qwe=345
+     * 
+     * "Statistics Data" is a header printed before each number of samples,
+     * and samples have names, consisting of two name parts separated by :, 
+     * followed by a value. The above output has two series "foo:bar" and
+     * "asd:qwe" with three samples each.
+     */
+
+    /*
+     * Optionally a parser may support some parameters, which have a name that
+     * is displayed at the GUI and stored in the project file, and a value.
+     * Here we demonstrate how to use a parameter to make a time-value pair
+     * delimiter configurable.
+     * Whenever a parameter for a parser is changed, PDA will re-parse the
+     * file and call createAllSeries() and parse() again.
+     */
+    private static final String PARAM_DELIMITER = "Name Value Delimiter";
+    private String delimiter = "=";
+    
+    // @Override
+    /*
+     * We must implement a method that returns true if we think our parser can
+     * handle the file specified as an argument. This is used to help PDA
+     * suggest a parser for a file.
+     * A sophisticated implementation would open the file, and look at its content
+     * to decide whether it can be handled or not. Most parsers in PDA just go
+     * by filenames and return true if the filename contains a certain string.
+     * Such a check is implemented in the super.canHandle(filename, string)
+     * method we're calling here.
+     */
+    public boolean canHandle(String filename) {
+        return super.canHandle(filename, "demofile");
+    }
+    
+    /*
+     * Each parser must have a default constructor with no arguments, that calls
+     * the superclass constructor and passes this parser's name to it. The parser's
+     * name is used as a first name part of each series and must not contain a colon.
+     */
+    public DemoParser() {
+        super("demo");
+        /*
+         * If our parser has any parameters, we need to tell PDA by calling the
+         * setParameter(paramName, paramValue) method.
+         */
+        setParameter(PARAM_DELIMITER, delimiter);
+        /*
+         * We should also set the supported file format description which is
+         * displayed to users when they select out parser.
+         */
+        setSupportedFileFormat(new FileFormatDescription(
+                "My product",       // product supported by this parser
+                "1.0",              // supported product versions
+                "demostat",         // the component of the product this parser handles
+                new String[][] { { "-a", "-b" },   // the arguments to demostat supported
+                                 { "-x", "-y" } }, // by this parser
+                "demostat samples", // a description of this parser
+                "name=value"));     // some examples of what the supported format looks like
+        /*
+         * In case the data file does not contain any samples, a parser can set a
+         * default sampling interval which PDA will automatically apply to each
+         * new sample. Per default, this interval is 0. The timestamp is incremented
+         * by this interval whenever PDA finds a header specified by setNewSamplesHeader(header)
+         * (see later).
+         */
+        setDefaultInterval(10);
+    }
+    
+    // @Override
+    /*
+     * This method is called by PDA when a parser has been selected for a file,
+     * and before the file actually gets parsed. The intention of this method is
+     * that without reading the entire file, a parser provides a quick way of
+     * returning all series of a file.
+     * If series are static, that's a simple thing to do. If they depend on the
+     * content of the file, this method will have to read some (or worst case all)
+     * of the file. If there's no way we can get the series without reading the
+     * whole file, this method may also directly call parse().
+     */
+    public void createAllSeries() {
+        /*
+         * First we create a pattern using the configured delimiter.
+         */
+        Pattern p = Pattern.compile("(.+):(.+)" + delimiter + "(.*)");
+        
+        /*
+         * PDA has already opened the file for you. To read a line from the file,
+         * use the readLine() method.
+         */
+        String s;
+        
+        /**
+         * First jump until one line past the first header
+         */
+        while ( (s = readLine()) != null && !s.startsWith("Statistics Data"));
+        while ( (s = readLine()) != null) {
+            /*
+             * Now read the series names from the first section, until we
+             * reach the String "Statistics Data" again.
+             */
+            if (s.startsWith("Statistics Data")) {
+                break;
+            }
+            Matcher m = p.matcher(s);
+            if (m.matches()) {
+                /*
+                 * Split the series name into category:series
+                 */
+                String categoryName = m.group(1);
+                String seriesName = m.group(2);
+                /*
+                 * Now that we now the name, we can add the series to this
+                 * parser's data structure. All we need to do is call the
+                 * method addSeries(categoryName, subcategoryName, seriesName).
+                 */
+                series().addSeries(categoryName, "", seriesName);
+            }
+        }
+    }
+
+    // @Override
+    /*
+     * This method is called by PDA when a parser is asked to parse the file.
+     * During parsing, the parser needs to add samples to this parser's series.
+     * Since createAllSeries() is always called before parse(), a parser can
+     * assume that it has already created all the series. It is allowed for a
+     * parser to create additional series in parse(), but this is not recommended
+     * as these will not show up at the GUI if the parser is freshly selected.
+     */
+    public void parse() {
+        /*
+         * If our file does not contain timestamps, PDA can automatically increment
+         * the current timestamp by a configured interval each time it finds a
+         * header line (except for the first header line). Header lines have to match
+         * part of the line and can also be specified as regular expressions.
+         * Once PDA has found a timestamp in a file, it will keep on using timestamps
+         * and ignore any header lines and intervals. These are only used for the
+         * case that PDA doesn't find timestamps.
+         */
+        setNewSamplesHeader("Statistics Data");
+
+        /*
+         * Again create a pattern using the configured delimiter.
+         */
+        Pattern p = Pattern.compile("(.+)" + delimiter + "(.*)");
+        
+        /*
+         * PDA has already opened the file for us. We can go ahead and start
+         * reading lines from the beginning of it by calling readLine().
+         */
+        String s;
+        while ((s = readLine()) != null) {
+            Matcher m = p.matcher(s);
+            if (m.matches()) {
+                /*
+                 * PDA supports predefined timestamps using different patterns.
+                 * It automatically scans for timestamps in each line that we're reading,
+                 * so we don't have to do for it ourselves. It also automatically adds
+                 * any configured offset to our timestamps, and increases it by the
+                 * configured interval if necessary. 
+                 * We can obtain the current timestamp from getCurrentTimeStamp().getTimeStamp().
+                 */
+                long t = getCurrentTimeStamp().getTimeStamp();
+                /*
+                 * Split the series name into category:series
+                 */
+                String categoryName = m.group(1);
+                String seriesName = m.group(2);
+                try {
+                    /*
+                     * Parse the value
+                     */
+                    double value = Double.parseDouble(m.group(3));
+                    /*
+                     * Now add the sample to the series. To add it, we need to
+                     * specify the series based on category, subcategory and
+                     * series names, and specify the samle data - a unix timestamp
+                     * (long) and a value (double).
+                     * It could be that the series has not been selected to be
+                     * displayed. In that case, this sample is not needed, and to
+                     * save memory PDA might decide that it doesn't need this.
+                     * So instead of callind addSample(...), we should call
+                     * addSampleIfNeeded(...), which will only add this sample
+                     * if PDA thinks it needs it. Otherwise the method will
+                     * return without doing anything.
+                     */
+                    series().addSampleIfNeeded(categoryName, "", seriesName, t, value);
+                } catch (NumberFormatException e) {
+                    // nothing to do (ignore this sample!
+                }
+            }
+            /*
+             * Lastly we need to tell PDA which scale to use. For this, PDA offers
+             * quite a few methods to align scales of similar series. Please refer
+             * to the JavaDoc for a list of those. The easiest way is to just let
+             * PDA figure out an individual scale for each series based on the
+             * samples it contains, by calling setPreferredScaleIndividual().
+             */
+            series().setPreferredScaleIndividual();
+        }
+    }
+    
+    // @Override
+    /*
+     * For each parameter that we've added, we need to implement some handling
+     * inside the setParameter(name, value) method that we're overriding.
+     * When a parameter is set, PDA will call this method and afterwards call
+     * parse() to reparse the file.
+     */
+    public void setParameter(String name, String value) {
+        super.setParameter(name, value);
+        if (PARAM_DELIMITER.equals(name)) {
+            delimiter = (value != null && value.length() > 0 ? value : ";");
+        }
+    }
+    
+  }
+
+
+Plugin your Parser into PDA
+---------------------------
+
+Once you have developed and compiled your parser, you need to plug it into PDA.
+PDA scans for parsers in the *parsers* directory under your PDA installation path.
+Parsers in that directory must be organized according to their classpath, so if you
+created a parser *com.mycompany.MyParser*, then you need to create subdirectories
+*com/mycompany* in *parsers* and put your *MyParser.class* in there.
+
+Please only put parser classes into the *parsers* directory. If your parser needs
+additional libraries, please package them into a jar file and simply copy the jar
+file into PDA's *program/lib* directory. PDA will automatically pick up all jar files
+in that directory.
+
+Contributing your parser to PDA
+-------------------------------
+
+If you have implemented a parser which might be useful to others, please contribute
+it back to the PDA project! Join PDA on `java.net <http://java.net/projects/perfdata/>`_
+or email info@pda.nmichael.de.

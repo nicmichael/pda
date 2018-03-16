@@ -1,0 +1,32 @@
+Currently supported Parsers
+===========================
+
+The following parsers are currently available for PDA. If your parser is not in
+the list, please consider to `write your own parser <writeaparser.html>`_.
+
+============= ================= ================================================
+Parser        Product           Description
+============= ================= ================================================
+AlertLog      Oracle Database   Selected events from alert.log
+CellMetrics   Oracle ExaData    Metrics from ExaData Storage Cells
+CollectD      collectd          All data from collectd
+CollectL      collectl          All data from collectl
+Csv           generic           Data from generic CSV files
+Faban         Faban             Faban load generator driver logfiles
+HotSpot       Java HotSpot      HotSpot GC logfiles for ParNew, ParOld, CMS, G1
+Iostat        Solaris, Linux    I/O statistics from iostat
+JRockit       Java JRockit      JRockit GC logfiles
+Mpstat        Solaris, Linux    Processor statistics from mpstat
+Netstat       Solaris, Linux    Network statistics from netstat
+Nicstat       Solaris, Linux    Network statistics from nicstat
+Perf          Linux             Hardware performance counters from perf -stat
+Pgstat        Solaris           Processor group statistics from pgstat
+Ping          Solaris, Linux    Network latency statistics from ping
+Prstat        Solaris           Process and thread statistics from prstat
+Ps            Solaris, Linux    Process statistics from ps and OSWatcher
+RegExp        generic           Logfiles containing arbitrary data specified through regular expressions
+Sar           Solaris, Linux    CPU and system statistics from sar
+Swap          Solaris           Swap file statistics from swap
+Vmstat        Solaris, Linux    Virtual memory and cpu statistics from vmstat
+WebLogic      WebLogic          Selected statistics from WebLogic server logfiles
+============= ================= ================================================

@@ -1,0 +1,33 @@
+PDA - Performance Data Analyzer
+===============================
+
+Contents:
+
+.. toctree::
+   :maxdepth: 1
+
+   firststeps
+   tutorial
+   cli
+   writeaparser
+
+PDA - Performance Data Analyzer is a tool that helps you to analyze performance data
+and troubleshoot problems by correlating data from various sources. It comes with
+parsers for many common formats such as vmstat, mpstat, iostat and allows you to
+easily display their data in a single graph, interactively zoom in and out, and
+calculate various statistics from the data.
+
+The pluggable parser framework allows you to implement your own parsers for your data
+formats, making any of your data accessible for PDA. Parsers provide data in form of
+multiple series, which each are a sequence of time-value pairs. All data that PDA
+displays use time on the x-axis and values on the y-axis.
+
+For more information about PDA, visit the homepage at `pda.nmichael.de <http://pda.nmichael.de/>`_.
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

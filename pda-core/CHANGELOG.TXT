@@ -1,0 +1,115 @@
+Version 2.1.0_00 (2018-03-15)
+-----------------------------
+* New: simple reporter for automated report generation
+* New: filter option in select series dialog for only statistics series with data
+* New: added nicstat and perf parsers
+* Bugfixes: mpstat parser and others
+* Small enhancements
+
+Version 2.0.5_04 (2016-01-08)
+-----------------------------
+* Bugfix: fixed infinite loop when trimming colons in series names from the end of a string
+* Bugfix: improved performance of the NameValue parser
+
+Version 2.0.5_03 (2015-09-17)
+-----------------------------
+* New: Selective parsers (mpstat, iostat, prstat) support lines with prefixed timestamps
+
+Version 2.0.5_00 (2015-01-09)
+-----------------------------
+* New: Added support for converter plugins that allow to convert input files to other formats
+
+Version 2.0.4_03 (2015-01-02)
+-----------------------------
+* New: Enhanced prstat support
+
+Version 2.0.4_02 (2014-07-28)
+-----------------------------
+* New: Support for Java 8 logfiles
+
+Version 2.0.4_01 (2014-07-24)
+-----------------------------
+* Bugfix: Label scaling bug fixed
+
+Version 2.0.4_00 (2014-06-12)
+-----------------------------
+* New: Command line support for plotting of files with selective series added
+
+Version 2.0.3_00 (2014-01-22)
+-----------------------------
+* New: Feature to replace directory in an existing project
+* Bugfix: Logging bugfix
+* Bugfix: Line width property got lost when series configuration dialog was opened
+
+Version 2.0.2_04 (2013-11-14)
+-----------------------------
+* Bugfix: In case of negative min values, all series now scaled based on min:max ratio with common null axis
+* Bugfix: Auto-correction for line style and line width selection in properties dialog
+
+Version 2.0.2_03 (2013-11-11)
+-----------------------------
+* New: Null Axis in case of negative values
+* Bugfix: Parser allows user-specified, negative min value for scaling
+
+Version 2.0.2_02 (2013-11-11)
+-----------------------------
+* New: Added verbose mode for debug logging
+* Bugfix: Error messages are now not only logged, but also displayed as an error dialog
+
+Version 2.0.2_01 (2013-11-10)
+-----------------------------
+* Bugfix: Selection of linesyle "dashed" in combination with line width of greater than 1 fixed
+
+Version 2.0.2_00 (2013-11-10)
+-----------------------------
+* New: Users can now configure size and color of labels
+* New: Series labels are now intelligently placed based on space requirements
+* New: User-editable Labels for data series can now be added easily (with pre-defined text and color)
+* New: Support for Parsers to add labels to data points
+* Bugfix: Restoring of label position from saved projects fixed
+* Bugfix: Labels are now moved to the front and are not hidden by the data curves any more
+* Bugfix: Impulses were not properly scaled to sample's y value
+
+Version 2.0.1_02 (2013-11-09)
+-----------------------------
+* Bugfix: Fixed removing of series by clicking "delete" button (series was not properly deleted and could not be added any more)
+
+Version 2.0.1_01 (2013-08-19)
+-----------------------------
+* Bugfix: Preferred plotting style now set properly during parsing
+
+Version 2.0.1_00 (2013-08-14)
+-----------------------------
+* New: Improved Zoom now allows to zoom in and out, scroll left and right, without having to reset the zoom each time
+* New: Line Width 2 now default plotting style
+
+Version 2.0.0_07 (2013-08-13)
+-----------------------------
+* Bugfix: File names now stored relative to project file
+* Bugfix: Fixed error dialog (parser error message not displayed properly)
+* Bugfix: Lost "max scale" setting fixed
+
+Version 2.0.0_04 (2013-06-06)
+-----------------------------
+* New: Improved SeriesSelect Dialog (double click, focus)
+
+Version 2.0.0_03 (2013-06-06)
+-----------------------------
+* New: ps parser now also supports "ps -ef" output
+* New: prstat parser now also supports "ps -ef" output to read processes names
+* New: AlertLog parser now also prints incremental checkpoints and redolog allocation failures
+* Bugfix: Samples getting added multiple times if further series get selected fixed
+
+Version 2.0.0_02 (2013-06-01)
+-----------------------------
+* New: iostat parser now also supports Linux
+
+Version 2.0.0_01 (2013-05-05)
+-----------------------------
+* New: prstat parser gets process names from ps (if ps output is found)
+* New: mpstat now also supports "-p" option on Solaris
+* Bugfix: Sampling interval is now also applied if one timestamp was found (as long as less than 2 timestamps)
+
+Version 2.0.0_00 (2013-04-14)
+-----------------------------
+* Rewritten Version 2.0

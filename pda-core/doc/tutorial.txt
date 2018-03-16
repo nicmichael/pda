@@ -1,0 +1,123 @@
+Tutorial - Step-by-Step through PDA
+===================================
+
+If you want to get started with PDA, but don't have any data at hand, don't worry!
+PDA can generate some data for you to play with.
+
+Generating Test Data
+--------------------
+
+Before we can load data into PDA, we need some. PDA comes with a small demo which 
+generates a CSV-based logfile, as well as a Java Garbage Collection logfile. Please run::
+
+  ./writeJavaGC.sh
+
+Start the Performance Data Analyzer
+-----------------------------------
+
+To start the PDA GUI, please run::
+
+  ./pda.sh
+
+Loading Data into PDA
+---------------------
+
+Click on *Configure Project* to configure the current (unnamed) project.
+
+Now we want to add some files to this project. Click on the file open symbol
+and select the Garbage Collection logfile *javagc.log* that was just generated. 
+A window *Select Parser* appears. PDA automatically tries to determine which parser 
+it thinks can handle this file. If not already preselected, please chose *HotSpot (de.nmichael.pda.parser.HotSpot)*
+as the parser. In the table below, each parser provides some information on the 
+data it can handle. Click *OK* to open and parse the file. 
+
+Selecting Data Series to Plot
+-----------------------------
+
+All data provided by parsers is organized in categories and subcategories, which contain 
+one or multiple series. It is very much up to the parser, how data is organized. The Hotspot
+parser organizes its series into the cateogies *gc* for garbage collection related statistics,
+*heap* for heap usage and *time* for time spent in the application and the JVM. Subcategories
+for *gc* are the various garbage collection algorithms like *ParNew*, *ParOld*, *CMS* and *G1*,
+while for *heap* the subcategories are the various heap regions like *Young*, *Eden*, *Survivor*,
+*Old*, and *Perm*. Under these subcategories, you can then find the various series.
+
+To add a series, click the *Select Series* button. For plotting our GC output, type
+*heap* into the field *Filter* to only filter for heap-related series. Now select
+the three series *gc:heap:total:capacity*, *gc:heap:total:used* and *gc:heap:young:used* by
+selecting them on the left side and clicking the right-arrow button to add them as 
+selected series. Then click *OK*. PDA will now add all these series to the project, 
+and automatically chose colors, styles and value ranges to plot them.
+
+To change some attributes, now click on the *Settings* button of series *gc:heap:young:used* 
+(which is the current Young Heap occupancy). For test purposes, change the maximum value of the 
+Y axis (Range Y to) to *2.0E11* (that's *200000000000.0*), and change the parameter *Value Axis*
+to *logarithmic*. Click *OK*.
+
+Now in the Configure Project dialog, enter a *Title* (for example, *GC Demo*), and click *OK* to plot 
+the data. 
+
+Plotted Data
+------------
+
+All data plotted by PDA is value-time-based. All samples are aligned along a 
+common time axis (X axis). Each series of data may have an individual scale on the 
+value axis (Y axis). On the top of the screen, each series' name can be found in 
+the color used to plot that series. Underneath the name, you can see the value range. 
+For example, series *gc:heap:young:heap* that we have edited before is plotted in green, 
+using a value range from *0* to *200G* on the Y axis.
+
+Now click the *Select Series* button on the right, add series *gc:gc:parnew:pause*,
+and click *OK*.
+
+Note also that different styles are used for the data. Most series are plotted using 
+lines. Only series *gc:gc:parnew:pause* (the pause times for garbage collections in 
+the young generation) are plotted using dots.
+
+On the right side of the screen, click the button with the magenta label *gc:gc:parnew:pause*. 
+A window named *Series Statistics* will pop up and display some statistics about 
+this series, as the number of found samples within the selected time frame, 
+Min/Max/Avg/Variance/Standard Deviation for this series, as well as the Min/Max/Avg 
+distance between samples. In terms of garbage collection times, the Avg Distance 
+is our average garbage collection interval, and the Avg Value is the average 
+time (in this case in milliseconds) for a garbage collection. Click *OK* to close 
+the window again.
+
+With the mouse, you can zoom into data more closely, by selecting a certain part 
+of the graph. Note that zooming will only zoom in on the X axis, not the Y axis. 
+For example, zoom into the letter V of the plotted data. Now click the statistics 
+button for series *gc:gc:parnew:pause* again and note that now the statistics only 
+reflect the samples from the selected interval. After closing the statistics window, 
+click the *Reset Zoom* button to reset the zoom.
+
+By clicking *Add Label*, you can add a label to the graph and drag it to a 
+position you like. 
+
+Adding more Data
+----------------
+
+Click on *Configure Project* again to add more data, the click the file open symbol and select the *demo.csv*
+file that was generated earlier. Select parser *csv (de.nmichael.pda.parser.Csv)* and click *OK* to open 
+and parse the data. Then click on *Select Series*, filter by *csv*, and add the *csv:::Samples* series.
+Click *OK*. Now click *Settings* for the just added series and change the *Line Width* to *10*. Click *OK*,
+and *OK* again in the *Configure Project* dialog to plot the data.
+
+The cyan line from the CSV parser shows the curve that the demo was trying to plot by triggering garbage
+collections at the appropriate point in time. In shape, it should match the GC output. To better align it 
+with the rest of the data, click on the small configuration icon next to the *Samples* series in the graph
+window. This is a shortcut to change the properties of a series without going though *Configure Project*. 
+Change *Range Y8* to to *1.5E8* and click *OK*. 
+
+Now the curves align nicely. Often it is a useful thing to do to align various curve on a *base point*
+and look at their relative behavior and scaling from there on.
+
+Saving a Project
+----------------
+
+To save the project, select *Save as...* from the *Project* menu and save the project. It can then later 
+be opened again.
+
+To save the current graph as a PNG image, click the *Save Image* button or select *Save As Image...* from 
+the *Project* menu.
+
+Congratulations! Now you know how to use PDA.
