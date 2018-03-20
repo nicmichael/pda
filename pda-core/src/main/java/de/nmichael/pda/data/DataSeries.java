@@ -177,6 +177,7 @@ public class DataSeries implements Comparable {
             updateMinMax(m);
             prev = cur;
         }
+        samples = monotonic;
     }
 
     /**

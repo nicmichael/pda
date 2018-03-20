@@ -6,8 +6,35 @@
         <artifactId>pda</artifactId>
         <version>2.1.0</version>
     </parent>
+    
     <artifactId>pda-parsers</artifactId>
     <packaging>jar</packaging>
+    
+    <name>PDA - Parsers</name>
+    <description>Performance Data Analyzer - Parsers</description>
+    <url>http://pda.nmichael.de/</url>
+    
+    <licenses>
+        <license>
+            <name>GNU General Public License, Version 2</name>
+            <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt</url>
+        </license>
+    </licenses>
+    
+    <developers>
+        <developer>
+            <name>Nicolas Michael</name>
+            <email>email@nmichael.de</email>
+            <organizationUrl>http://www.nmichael.de</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/nicmichael/pda.git</connection>
+        <developerConnection>scm:git:ssh://github.com:nicmichael/pda.git</developerConnection>
+        <url>https://github.com/nicmichael/pda</url>
+    </scm>
+        
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

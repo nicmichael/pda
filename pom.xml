@@ -5,10 +5,37 @@
     <artifactId>pda</artifactId>
     <version>2.1.0</version>
     <packaging>pom</packaging>
+    
+    <name>PDA</name>
+    <description>Performance Data Analyzer</description>
+    <url>http://pda.nmichael.de/</url>
+    
+    <licenses>
+        <license>
+            <name>GNU General Public License, Version 2</name>
+            <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt</url>
+        </license>
+    </licenses>
+    
+    <developers>
+        <developer>
+            <name>Nicolas Michael</name>
+            <email>email@nmichael.de</email>
+            <organizationUrl>http://www.nmichael.de</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/nicmichael/pda.git</connection>
+        <developerConnection>scm:git:ssh://github.com:nicmichael/pda.git</developerConnection>
+        <url>https://github.com/nicmichael/pda</url>
+    </scm>
+    
     <modules>
         <module>pda-core</module>
         <module>pda-parsers</module>
     </modules>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
