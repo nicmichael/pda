@@ -26,6 +26,21 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public abstract class Parser {
+    
+    class SeriesName {
+        String category;
+        String subcategory;
+        String series;
+        boolean base1024units;
+        double scaleFactor;
+        SeriesName(String category, String subcategory, String series, boolean base1024units, double scaleFactor) {
+            this.category = category;
+            this.subcategory = subcategory;
+            this.series = series;
+            this.base1024units = base1024units;
+            this.scaleFactor = scaleFactor;
+        }
+    }
 
     public static final String XML_PARSER = "Parser";
     public static final String XML_NAME = "Name";
@@ -51,6 +66,7 @@ public abstract class Parser {
     private TimeStamp timestamp;
     private DataSeriesSet seriesSet;
     private Pattern newSamplesHeader;
+    private Hashtable<Pattern,SeriesName> patterns = new Hashtable<Pattern,SeriesName>(); 
 
     public Parser(String name) {
         initialize(name);
@@ -537,4 +553,53 @@ public abstract class Parser {
         return tsOffset_hours*3600 + tsOffset_minutes*60 + tsOffset_secs;
     }
     
+    public void registerSeriesPattern(String category, String subcategory, String series, Pattern p, boolean base1024units) {
+        patterns.put(p, new SeriesName(category, subcategory, series, base1024units, 1));
+    }
+    
+    public void registerSeriesPattern(String category, String subcategory, String series, Pattern p, double factor) {
+        patterns.put(p, new SeriesName(category, subcategory, series, false, factor));
+    }
+    
+    public DataSeries addSampleForRegisteredPatterns(long ts, String s, boolean onlyIfNeeded) {
+        Matcher m;
+        for (Pattern p : patterns.keySet()) {
+            m = p.matcher(s);
+            if (m.matches()) {
+                SeriesName sn = patterns.get(p);
+                DataSeries ds = series().getOrAddSeries(sn.category, sn.subcategory, sn.series);
+                for (int i=0; i<m.groupCount(); i++) {
+                    if (onlyIfNeeded) {
+                        ds.addSampleIfNeeded(ts, Util.parseDouble(m.group(i+1), sn.base1024units) * sn.scaleFactor);
+                    } else {
+                        ds.addSample(ts, Util.parseDouble(m.group(i+1), sn.base1024units) * sn.scaleFactor);
+                    }
+                }
+                return ds;
+            }
+        }
+        return null;
+    }
+    
+    public int addAllSamplesForRegisteredPatterns(long ts, String s, boolean onlyIfNeeded) {
+        int c = 0;
+        Matcher m;
+        for (Pattern p : patterns.keySet()) {
+            m = p.matcher(s);
+            if (m.matches()) {
+                SeriesName sn = patterns.get(p);
+                DataSeries ds = series().getOrAddSeries(sn.category, sn.subcategory, sn.series);
+                for (int i=0; i<m.groupCount(); i++) {
+                    if (onlyIfNeeded) {
+                        ds.addSampleIfNeeded(ts, Util.parseDouble(m.group(i+1), sn.base1024units) * sn.scaleFactor);
+                    } else {
+                        ds.addSample(ts, Util.parseDouble(m.group(i+1), sn.base1024units) * sn.scaleFactor);
+                    }
+                }
+                c++;
+            }
+        }
+        return c;
+    }
+
 }

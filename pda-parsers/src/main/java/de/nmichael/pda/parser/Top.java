@@ -29,7 +29,7 @@ public class Top extends Parser {
     private static Pattern p = Pattern.compile(" *(\\d+) +([^ ]+) +[^ ]+ +[^ ]+ +(\\d+\\.?\\d*[kmgt]?) +(\\d+\\.?\\d*[kmgt]?) +(\\d+\\.?\\d*[kmgt]?) +[^ ]+ +(\\d+\\.?\\d*) +[^ ]+ +[^ ]+ (.+)");
 
     private int minThreshold = 0;
-    private Hashtable<String,String> pid2args = new Hashtable<String,String>();
+    protected Hashtable<String,String> pid2args = new Hashtable<String,String>();
 
     // @Override
     public boolean canHandle(String filename) {
@@ -176,7 +176,7 @@ public class Top extends Parser {
         }
     }
     
-    private String getCategory(String pid, String user, String name) {
+    protected String getCategory(String pid, String user, String name) {
         String args = pid2args.get(pid);
         return user.trim() + "_" + name.trim(); 
     }

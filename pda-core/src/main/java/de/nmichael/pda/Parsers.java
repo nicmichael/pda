@@ -35,9 +35,10 @@ public class Parsers {
         	// ignore - this may be a non-parser class
         } catch (Exception e) {
             Logger.log(Logger.LogType.warning, "Error registering Parser " + className + ": " + e.toString());
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (java.lang.Error e) {
             Logger.log(Logger.LogType.warning, "Error registering Parser " + className + ": " + e.toString());
+            e.printStackTrace();
         }
         return null;
     }

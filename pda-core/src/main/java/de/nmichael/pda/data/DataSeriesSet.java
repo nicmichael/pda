@@ -567,7 +567,7 @@ public class DataSeriesSet {
      * @param sameSubcategory if true, group series with same subcategory name
      * @param sameSeries if true, group series with same series name
      */
-    public void setPreferredScaleMinMaxSame(boolean sameCategory, boolean sameSubcategory, boolean sameSeries) {
+    public void setPreferredScaleMaxSame(boolean sameCategory, boolean sameSubcategory, boolean sameSeries) {
         Hashtable<String, Double> maxValues = new Hashtable<String, Double>();
         for (String c : getCategoryNames()) {
             for (String sc : getSubcategoryNames(c)) {
@@ -596,7 +596,7 @@ public class DataSeriesSet {
                             + (sameSeries ? s : "");
                     Double max = maxValues.get(key).doubleValue();
                     double scaledMax = Util.roundUpToScale((max != Double.MAX_VALUE ? max : 1));
-                    series.setPreferredScale(-1 * scaledMax, scaledMax);
+                    series.setPreferredScale(0, scaledMax);
                 }
             }
         }

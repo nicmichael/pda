@@ -10,6 +10,7 @@
 
 package de.nmichael.pda.parser;
 
+import de.nmichael.pda.Logger;
 import de.nmichael.pda.data.*;
 import de.nmichael.pda.util.Util;
 import java.util.regex.*;
@@ -70,7 +71,6 @@ public class HotSpot extends Parser {
     private static final String S_G1_CONCCOUNT     = "concurrent-count";
     private static final String S_G1_CLEANUP       = "cleanup";
     private static final String S_G1_CONCCLEANUP   = "concurrent-cleanup";
-
     
     private static final String C_TIME             = "time";
     
@@ -125,8 +125,14 @@ public class HotSpot extends Parser {
     private static Pattern g1_pause_detailsSumAvgMinMaxDiff = Pattern.compile(".* Sum: *([0-9]+.[0-9]+), Avg: *([0-9]+.[0-9]+), Min: *([0-9]+.[0-9]+), Max: *([0-9]+.[0-9]+), Diff: *([0-9]+.[0-9]+)\\].*");
     private static Pattern g1_pause_detailsMinAvgMaxDiffSum = Pattern.compile(".* Min: *([0-9]+.[0-9]+), Avg: *([0-9]+.[0-9]+), Max: *([0-9]+.[0-9]+), Diff: *([0-9]+.[0-9]+), Sum: *([0-9]+.[0-9]+)\\].*");
             
-    private static Pattern timesStopped = Pattern.compile("Total time for which application threads were stopped: (\\d+\\.\\d+) seconds");
+    private static Pattern timesStopped = Pattern.compile("Total time for which application threads were stopped: (\\d+\\.\\d+) seconds.*");
     private static Pattern timesRunning = Pattern.compile("Application time: (\\d+\\.\\d+) seconds");
+    
+    private boolean isUnifiedLogging = false;
+    private static Pattern unifiedLogging_reltime = Pattern.compile("\\[([0-9\\.]+)s\\](.+)");
+    private static Pattern unifiedLogging_abstime = Pattern.compile("\\[([0-9\\-T:\\.]+)\\+[0-9]+\\](.+)");
+    
+    private long starttime;
     
     // @Override
     public boolean canHandle(String filename) {
@@ -201,20 +207,140 @@ public class HotSpot extends Parser {
 
     // @Override
     public void createAllSeries() {
-        createSeriesHeap(SC_HEAP_EDEN);
-        createSeriesHeap(SC_HEAP_SURVIVOR);
-        createSeriesHeap(SC_HEAP_YOUNG);
-        createSeriesHeap(SC_HEAP_OLD);
-        createSeriesHeap(SC_HEAP_TOTAL);
-        createSeriesHeap(SC_HEAP_PERM);
-        createSeriesGC();
-        createSeriesTime();
+        // probe file whether this is unified logging format (JDK9+)
+        try {
+            fmark(1024*1024);
+            String s;
+            int i = 0;
+            while ((s = readLine()) != null && i++ < 100) {
+                if (unifiedLogging_abstime.matcher(s).matches() || unifiedLogging_reltime.matcher(s).matches()) {
+                    Logger.log(Logger.LogType.debug, "Hotspot Parser - detected unified logging format");
+                    isUnifiedLogging = true;
+                    break;
+                }
+            }
+            freset();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
+        if (isUnifiedLogging) {
+            registerSeriesPattern("safepoint", "application", "time-running", Pattern.compile("Application time: ([0-9\\.]+) seconds"), false);
+            registerSeriesPattern("safepoint", "application", "time-stopped", Pattern.compile("Total time for which application threads were stopped: ([0-9\\\\.]+) seconds.*"), false);
+            registerSeriesPattern("gc", "pause-young", "time",    Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9\\\\.]+)ms"), false);
+            registerSeriesPattern("gc", "pause-young", "cpu-usr", Pattern.compile("GC\\([0-9]+\\) User=([0-9\\.]+)s Sys=[0-9\\\\.]+s Real=[0-9\\\\.]+s"), 1000);
+            registerSeriesPattern("gc", "pause-young", "cpu-sys", Pattern.compile("GC\\([0-9]+\\) User=[0-9\\.]+s Sys=([0-9\\\\.]+)s Real=[0-9\\\\.]+s"), 1000);
+            registerSeriesPattern("gc", "heap", "young-before",         Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->[0-9KMGT]+\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "young-after",          Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "young-capacity",       Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->[0-9KMGT]+\\(([0-9KMGT]+)\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "young-used",           Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            parse();
+        } else {
+            // pre JDK9
+            createSeriesHeap(SC_HEAP_EDEN);
+            createSeriesHeap(SC_HEAP_SURVIVOR);
+            createSeriesHeap(SC_HEAP_YOUNG);
+            createSeriesHeap(SC_HEAP_OLD);
+            createSeriesHeap(SC_HEAP_TOTAL);
+            createSeriesHeap(SC_HEAP_PERM);
+            createSeriesGC();
+            createSeriesTime();
+        }
     }
+    
     
     // @Override
     public void parse() {
+        if (!this.isUnifiedLogging) {
+            parseOld();
+            return;
+        }
+
+        // New unified logging (JDK9+);
+        starttime = getCurrentTimeStamp().getTimeStamp();
+        String s;
+        while ((s = readLine()) != null) {
+            long t = 0;
+            Matcher m = unifiedLogging_abstime.matcher(s);
+            if (m.matches()) {
+                getCurrentTimeStamp().getTimeStampFromLine(m.group(1), null, 0, false);
+                t = getCurrentTimeStamp().getTimeStamp();
+            } else {
+                m = unifiedLogging_reltime.matcher(s);
+                if (m.matches()) {
+                    String ts = m.group(1);
+                    int p = ts.indexOf('.');
+                    if (p > 0 && p + 1 < ts.length()) {
+                        getCurrentTimeStamp().set(Long.parseLong(ts.substring(0, p)) * 1000
+                                + Long.parseLong(ts.substring(p + 1)) + starttime);
+                        t = getCurrentTimeStamp().getTimeStamp();
+                    }
+                }
+            }
+            if (t > 0) {
+                s = m.group(2);
+                int p = s.lastIndexOf(']');
+                if (p >= 0 && p + 1 < s.length()) {
+                    s = s.substring(p + 1);
+                }
+                s = s.trim();
+                //Logger.log(Logger.LogType.debug, "Hotspot Parser - at " + t + ": " + s);
+                addAllSamplesForRegisteredPatterns(t, s, false);
+            } else {
+                //Logger.log(Logger.LogType.debug, "Hotspot Parser - not matching: " + s);
+            }
+        }
+        
+        DataSeries ds;
+        if (( ds = series().getSeries("gc", "pause-young", "time")) != null) {
+            ds.setPreferredStyle(DataSeriesProperties.STYLE_POINTS);
+        }
+        if (( ds = series().getSeries("gc", "heap", "young-used")) != null && ds.getNumberOfSamples() > 0) {
+            // calculate object allocation rate
+            DataSeries allocRate = series().getOrAddSeries("gc", "objects", "alloc-rate");
+            if (allocRate.getNumberOfSamples() == 0) {
+                long lastgc = 0;
+                double bytesLast = 0;
+                double bytesAfterGC = 0;
+                for (int i = 0; i < ds.getNumberOfSamples(); i++) {
+                    Sample sample = ds.getSample(i);
+                    if (sample.getValue() < bytesLast) {
+                        // bytes after GC
+                        lastgc = sample.getTimeStamp();
+                        bytesAfterGC = sample.getValue();
+                    } else {
+                        // bytes at GC
+                        if (lastgc > 0) {
+                            long timediff = sample.getTimeStamp() - lastgc;
+                            if (timediff > 0) {
+                                allocRate.addSample(sample.getTimeStamp(), (sample.getValue()-bytesAfterGC) / (((double)timediff) / 1000));
+                            }
+                        }
+                    }
+                    bytesLast = sample.getValue();
+                }
+            }
+        }
+        
+        series().setPreferredScaleMaxSame(true, true, false);
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public void parseOld() {
         try {
-            long starttime = getCurrentTimeStamp().getTimeStamp();
+            starttime = getCurrentTimeStamp().getTimeStamp();
             
             String str;
             long cms_start_time = 0;
@@ -497,19 +623,19 @@ public class HotSpot extends Parser {
                 
                 m = g1_pause_heap.matcher(str);
                 if (m.matches() && t>0) {
-                    float eden_before = getKilobytes(m.group(1));
-                    float eden_cap_before = getKilobytes(m.group(2));
-                    float eden_cap_after = getKilobytes(m.group(3));
-                    float survivors_before = getKilobytes(m.group(4));
-                    float survivors_after = getKilobytes(m.group(5));
-                    float heap_before = getKilobytes(m.group(6));
-                    float heap_cap_before = getKilobytes(m.group(7));
-                    float heap_after = getKilobytes(m.group(8));
-                    float heap_cap_after = getKilobytes(m.group(9));
-                    float before = heap_before - survivors_before - eden_before;
-                    float cap_before = heap_cap_before - survivors_before - eden_cap_before;
-                    float after = heap_after - survivors_after;
-                    float cap_after = heap_cap_after - survivors_after - eden_cap_after;
+                    double eden_before = Util.stringKMG2double(m.group(1));
+                    double eden_cap_before = Util.stringKMG2double(m.group(2));
+                    double eden_cap_after = Util.stringKMG2double(m.group(3));
+                    double survivors_before = Util.stringKMG2double(m.group(4));
+                    double survivors_after = Util.stringKMG2double(m.group(5));
+                    double heap_before = Util.stringKMG2double(m.group(6));
+                    double heap_cap_before = Util.stringKMG2double(m.group(7));
+                    double heap_after = Util.stringKMG2double(m.group(8));
+                    double heap_cap_after = Util.stringKMG2double(m.group(9));
+                    double before = heap_before - survivors_before - eden_before;
+                    double cap_before = heap_cap_before - survivors_before - eden_cap_before;
+                    double after = heap_after - survivors_after;
+                    double cap_after = heap_cap_after - survivors_after - eden_cap_after;
                     
                     series().addSampleIfNeeded(C_HEAP, SC_HEAP_EDEN, S_HEAP_USED, t, eden_before);
                     series().addSampleIfNeeded(C_HEAP, SC_HEAP_EDEN, S_HEAP_USED, t, 0);
@@ -651,24 +777,4 @@ public class HotSpot extends Parser {
         }
     }
     
-    private float getKilobytes(String s) {
-        if (s == null || s.length() == 0) {
-            return 0;
-        }
-        float factor = 1;
-        if (s.endsWith("K")) {
-            factor = 1;
-            s = s.substring(0, s.length() - 1);
-        }
-        if (s.endsWith("M")) {
-            factor = 1024;
-            s = s.substring(0, s.length() - 1);
-        }
-        if (s.endsWith("G")) {
-            factor = 1024*1024;
-            s = s.substring(0, s.length() - 1);
-        }
-        return Float.parseFloat(s) * factor;
-    }
-
 }

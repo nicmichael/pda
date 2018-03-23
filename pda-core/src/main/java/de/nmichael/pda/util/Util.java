@@ -17,6 +17,8 @@ import java.util.regex.*;
 
 public class Util {
     
+    static final Pattern pNumber = Pattern.compile("([0-9\\.]+)([^0-9\\\\.]+)");
+    
     public static Color getColor(String s) {
         int cint;
         try {
@@ -352,6 +354,38 @@ public class Util {
     
     public static boolean isFile(String fname) {
     	return new File(fname).isFile();
+    }
+    
+    public static double parseDouble(String s, boolean base1024units) {
+        try {
+            return Double.parseDouble(s);
+        } catch(Exception e) {
+            try {
+                Matcher m = pNumber.matcher(s.trim());
+                if (m.matches()) {
+                    double d = Double.parseDouble(m.group(1));
+                    String unit = m.group(2).trim();
+                    if (unit.length() == 0) {
+                        return d;
+                    }
+                    if (unit.equalsIgnoreCase("k")) {
+                        return d * (base1024units ? 1024.0: 1000.0);
+                    }
+                    if (unit.equalsIgnoreCase("m")) {
+                        return d * (base1024units ? 1048576.0 : 1000000.0);
+                    }
+                    if (unit.equalsIgnoreCase("g")) {
+                        return d * (base1024units ? 1073741824.0 : 1000000000.0);
+                    }
+                    if (unit.equalsIgnoreCase("t")) {
+                        return d * (base1024units ? 1099511627776.0 : 1000000000000.0);
+                    }
+                }
+                return Double.NaN;
+            } catch(Exception e2) {
+                return Double.NaN;
+            }
+        }
     }
     
 }
