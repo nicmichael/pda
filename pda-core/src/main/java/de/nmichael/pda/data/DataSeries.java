@@ -162,7 +162,7 @@ public class DataSeries implements Comparable {
         return true;
     }
     
-    public void convertToMonotonic() {
+    public void convertToMonotonic(boolean ratePerSecond) {
         ArrayList<Sample> monotonic = new ArrayList<Sample>();
         if (samples.size() < 2) {
             return;
@@ -172,9 +172,20 @@ public class DataSeries implements Comparable {
         Sample prev = samples.get(0);
         for (int i=1; i<samples.size(); i++) {
             Sample cur = samples.get(i);
-            Sample m = new Sample(cur.getTimeStamp(), cur.getValue() - prev.getValue());
-            monotonic.add(m);
-            updateMinMax(m);
+            double value = cur.getValue() - prev.getValue();
+            if (ratePerSecond) {
+                long ms = cur.getTimeStamp() - prev.getTimeStamp();
+                if (ms > 0) {
+                    value = value * 1000.0 / ((double)ms);
+                } else {
+                    value = Double.NaN;
+                }
+            }
+            if (!Double.isNaN(value)) {
+                Sample m = new Sample(cur.getTimeStamp(), value);
+                monotonic.add(m);
+                updateMinMax(m);
+            }
             prev = cur;
         }
         samples = monotonic;
