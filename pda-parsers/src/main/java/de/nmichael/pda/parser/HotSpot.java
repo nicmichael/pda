@@ -230,10 +230,10 @@ public class HotSpot extends Parser {
             registerSeriesPattern("gc", "pause-young", "time",    Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9\\\\.]+)ms"), false);
             registerSeriesPattern("gc", "pause-young", "cpu-usr", Pattern.compile("GC\\([0-9]+\\) User=([0-9\\.]+)s Sys=[0-9\\\\.]+s Real=[0-9\\\\.]+s"), 1000);
             registerSeriesPattern("gc", "pause-young", "cpu-sys", Pattern.compile("GC\\([0-9]+\\) User=[0-9\\.]+s Sys=([0-9\\\\.]+)s Real=[0-9\\\\.]+s"), 1000);
-            registerSeriesPattern("gc", "heap", "young-before",         Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->[0-9KMGT]+\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
-            registerSeriesPattern("gc", "heap", "young-after",          Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
-            registerSeriesPattern("gc", "heap", "young-capacity",       Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->[0-9KMGT]+\\(([0-9KMGT]+)\\) [0-9\\\\.]+ms"), true);
-            registerSeriesPattern("gc", "heap", "young-used",           Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "heap-before",         Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->[0-9KMGT]+\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "heap-after",          Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "heap-capacity",       Pattern.compile("GC\\([0-9]+\\) Pause Young.* [0-9KMGT]+->[0-9KMGT]+\\(([0-9KMGT]+)\\) [0-9\\\\.]+ms"), true);
+            registerSeriesPattern("gc", "heap", "heap-used",           Pattern.compile("GC\\([0-9]+\\) Pause Young.* ([0-9KMGT]+)->([0-9KMGT]+)\\([0-9KMGT]+\\) [0-9\\\\.]+ms"), true);
             parse();
         } else {
             // pre JDK9
@@ -295,10 +295,10 @@ public class HotSpot extends Parser {
         if (( ds = series().getSeries("gc", "pause-young", "time")) != null) {
             ds.setPreferredStyle(DataSeriesProperties.STYLE_POINTS);
         }
-        if (( ds = series().getSeries("gc", "heap", "young-used")) != null && ds.getNumberOfSamples() > 0) {
+        if (( ds = series().getSeries("gc", "heap", "heap-used")) != null && ds.getNumberOfSamples() > 0) {
             // calculate object allocation rate
-            DataSeries allocRate = series().getOrAddSeries("gc", "objects", "alloc-rate");
-            if (allocRate.getNumberOfSamples() == 0) {
+            DataSeries garbageRate = series().getOrAddSeries("gc", "objects", "garbage-rate");
+            if (garbageRate.getNumberOfSamples() == 0) {
                 long lastgc = 0;
                 double bytesLast = 0;
                 double bytesAfterGC = 0;
@@ -313,7 +313,7 @@ public class HotSpot extends Parser {
                         if (lastgc > 0) {
                             long timediff = sample.getTimeStamp() - lastgc;
                             if (timediff > 0) {
-                                allocRate.addSample(sample.getTimeStamp(), (sample.getValue()-bytesAfterGC) / (((double)timediff) / 1000));
+                                garbageRate.addSample(sample.getTimeStamp(), (sample.getValue()-bytesAfterGC) / (((double)timediff) / 1000));
                             }
                         }
                     }
