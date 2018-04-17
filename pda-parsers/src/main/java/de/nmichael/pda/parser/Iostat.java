@@ -152,7 +152,11 @@ public class Iostat extends Parser {
     public void parse() {
         boolean first = true;
         boolean ignore = true;
-        setNewSamplesHeader("extended device statistics");
+        if (isLinux) {
+            setNewSamplesHeader("Filesystem:");
+        } else {
+            setNewSamplesHeader("extended device statistics");
+        }
         try {
             String s;
             long t = 0;
