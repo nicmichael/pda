@@ -17,38 +17,37 @@ import java.util.regex.*;
 import de.nmichael.pda.util.*;
 
 public class TimeStamp {
-	
-	// maximum number of attempts to match a pattern before it is discarded
-	private static final int TIMESTAMP_MATCHING_ATTEMPTS = 10;
-    
+
+    // maximum number of attempts to match a pattern before it is discarded
+    private static final int TIMESTAMP_MATCHING_ATTEMPTS = 10;
+
     public enum Fields {
-        year, month, day, hour, minute, second, ms,
-        nameOfMonth, unixms, unixsec, ampm,
-        weekday
+        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, ampm, weekday
     }
-    
+
     // Current Timestamp
-    private int YY,MM,DD,hh,mm,ss,ms;
-    
-    // Have we ever found any timestamps in this file, or is this a timestamp-less file?
+    private int YY, MM, DD, hh, mm, ss, ms;
+
+    // Have we ever found any timestamps in this file, or is this a timestamp-less
+    // file?
     private int numberOfTimestampsFound = 0;
     private int numberOfHeadersFound = 0;
-            
+
     private long offHH = 0;
     private long offMM = 0;
     private long offSS = 0;
     private boolean onlyTsWithDate = false;
-    
+
     private ArrayList<String> pTimestampDescription = new ArrayList<String>();
     private ArrayList<Pattern> pTimestampPattern = new ArrayList<Pattern>();
     private ArrayList<Fields[]> pTimestampGroupOrder = new ArrayList<Fields[]>();
-    private ArrayList<Boolean> matchedTimestamps = new ArrayList<Boolean>(); 
+    private ArrayList<Boolean> matchedTimestamps = new ArrayList<Boolean>();
 
     public TimeStamp(long offHH, long offMM, long offSS) {
         initializePatterns();
         reset(offHH, offMM, offSS);
     }
-    
+
     public void reset(long offHH, long offMM, long offSS) {
         setToToday();
         this.offHH = offHH;
@@ -57,67 +56,70 @@ public class TimeStamp {
         numberOfTimestampsFound = 0;
         numberOfHeadersFound = 0;
     }
-    
+
     private synchronized void initializePatterns() {
         // typical YYYY-MM-DD hh:mm:ss timestamp
-        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss (AP)",
-                            Pattern.compile(".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
-                            new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second, Fields.ampm } );
+        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
+                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
+                new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second,
+                        Fields.ampm });
 
         // typical MM.DD.YYYY hh:mm:ss timestamp
-        addTimeStampPattern("MM[.-/]DD[.-/]YYYY[- ]hh[:-.]mm[:-.]ss (AP)",
-                            Pattern.compile(".*(\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d\\d\\d)[\\- ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
-                            new Fields[] { Fields.month, Fields.day, Fields.year, Fields.hour, Fields.minute, Fields.second, Fields.ampm } );
-        
+        addTimeStampPattern("MM[.-/]DD[.-/]YYYY[- ]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
+                ".*(\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d\\d\\d)[\\- ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
+                new Fields[] { Fields.month, Fields.day, Fields.year, Fields.hour, Fields.minute, Fields.second,
+                        Fields.ampm });
+
         // typical YYYY-MM-DD hh:mm:ss.mss timestamp
-        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss[:-.,]mss",
-                            Pattern.compile(".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.,](\\d\\d\\d).*"),
-                            new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second, Fields.ms } );
+        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss[:-.,]mss", Pattern.compile(
+                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.,](\\d\\d\\d).*"),
+                new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second,
+                        Fields.ms });
 
         // timestamp as shown by "date" command
         addTimeStampPattern("WKD MON DD hh:mm:ss (TMZ) YYYY",
-                            Pattern.compile(".*(\\w\\w\\w) (\\w\\w\\w) +(\\d\\d?) (\\d\\d):(\\d\\d):(\\d\\d) [^ ]* *(\\d\\d\\d\\d).*"),
-                            new Fields[] { Fields.weekday, Fields.nameOfMonth, Fields.day, Fields.hour, Fields.minute, Fields.second, Fields.year } );
-        
+                Pattern.compile(
+                        ".*(\\w\\w\\w) (\\w\\w\\w) +(\\d\\d?) (\\d\\d):(\\d\\d):(\\d\\d) [^ ]* *(\\d\\d\\d\\d).*"),
+                new Fields[] { Fields.weekday, Fields.nameOfMonth, Fields.day, Fields.hour, Fields.minute,
+                        Fields.second, Fields.year });
+
         // I don't know where this pattern came from...
         addTimeStampPattern("YYYY MON DD hh:mm:ss (AP)",
-                            Pattern.compile(".*(\\d\\d\\d\\d) (\\w\\w\\w) +(\\d\\d?) (\\d\\d):(\\d\\d):(\\d\\d) ?([AP]?M?).*"),
-                            new Fields[] { Fields.year, Fields.nameOfMonth, Fields.day, Fields.hour, Fields.minute, Fields.second, Fields.ampm } );
-        
+                Pattern.compile(".*(\\d\\d\\d\\d) (\\w\\w\\w) +(\\d\\d?) (\\d\\d):(\\d\\d):(\\d\\d) ?([AP]?M?).*"),
+                new Fields[] { Fields.year, Fields.nameOfMonth, Fields.day, Fields.hour, Fields.minute, Fields.second,
+                        Fields.ampm });
+
         // WebLogic Log Timestamps
         addTimeStampPattern("MON DD, YYYY hh:mm:ss (AP)",
-                            Pattern.compile(".*(\\w\\w\\w) +(\\d\\d?), (\\d\\d\\d\\d) (\\d\\d?):(\\d\\d):(\\d\\d) ?([AP]?M?) .*"),
-                            new TimeStamp.Fields[] { TimeStamp.Fields.nameOfMonth, TimeStamp.Fields.day, TimeStamp.Fields.year, 
-                                                     TimeStamp.Fields.hour, TimeStamp.Fields.minute, TimeStamp.Fields.second, TimeStamp.Fields.ampm } );
+                Pattern.compile(".*(\\w\\w\\w) +(\\d\\d?), (\\d\\d\\d\\d) (\\d\\d?):(\\d\\d):(\\d\\d) ?([AP]?M?) .*"),
+                new TimeStamp.Fields[] { TimeStamp.Fields.nameOfMonth, TimeStamp.Fields.day, TimeStamp.Fields.year,
+                        TimeStamp.Fields.hour, TimeStamp.Fields.minute, TimeStamp.Fields.second,
+                        TimeStamp.Fields.ampm });
 
         // some special tooling
         addTimeStampPattern("TIME=YYYYMMDDhhmmss",
-                            Pattern.compile(".*TIME=(\\d\\d\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d).*"),
-                            new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second } );
+                Pattern.compile(".*TIME=(\\d\\d\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d).*"),
+                new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second });
 
         // typical MM/DD/YYYY timestamp (like in "sar -u")
-        addTimeStampPattern("MM/DD/YYYY",
-                            Pattern.compile(".*(\\d\\d)/(\\d\\d)/(\\d\\d\\d\\d).*"),
-                            new Fields[] { Fields.month, Fields.day, Fields.year } );
+        addTimeStampPattern("MM/DD/YYYY", Pattern.compile(".*(\\d\\d)/(\\d\\d)/(\\d\\d\\d\\d).*"),
+                new Fields[] { Fields.month, Fields.day, Fields.year });
 
         // typical hh:mm:ss timestamp (like in "sar -u")
-        addTimeStampPattern("hh:mm:ss (AP)",
-                            Pattern.compile(".*(\\d\\d):(\\d\\d):(\\d\\d) ?([AP]?M?).*"),
-                            new Fields[] { Fields.hour, Fields.minute, Fields.second, Fields.ampm } );
-        
+        addTimeStampPattern("hh:mm:ss (AP)", Pattern.compile(".*(\\d\\d):(\\d\\d):(\\d\\d) ?([AP]?M?).*"),
+                new Fields[] { Fields.hour, Fields.minute, Fields.second, Fields.ampm });
+
         // TS=unixms
-        addTimeStampPattern("TS=unixms",
-                            Pattern.compile("TS=(\\d+).*"),
-                            new Fields[] { Fields.unixms } );
-        
+        addTimeStampPattern("TS=unixms", Pattern.compile("TS=(\\d+).*"), new Fields[] { Fields.unixms });
+
     }
-    
+
     public synchronized void addTimeStampPattern(String description, Pattern pattern, Fields[] groupOrder) {
         pTimestampDescription.add(description);
         pTimestampPattern.add(pattern);
         pTimestampGroupOrder.add(groupOrder);
     }
-    
+
     public synchronized void addTimeStampPatternFirst(String description, Pattern pattern, Fields[] groupOrder) {
         pTimestampDescription.add(0, description);
         pTimestampPattern.add(0, pattern);
@@ -131,39 +133,40 @@ public class TimeStamp {
             pTimestampGroupOrder.remove(idx);
         }
     }
-    
+
     public void setOnlyTimeStampsWithDate(boolean onlyTsWithDate) {
         this.onlyTsWithDate = onlyTsWithDate;
     }
-    
+
     public synchronized void deleteAllTimeStampPatterns() {
         while (size() > 0) {
             deleteTimeStampPattern(0);
         }
     }
-    
+
     public synchronized int size() {
         return pTimestampDescription.size();
     }
-    
+
     public synchronized String getTimeStampDescription(int idx) {
         return (idx >= 0 && idx < size() ? pTimestampDescription.get(idx) : null);
     }
-    
+
     public synchronized Pattern getTimeStampPattern(int idx) {
         return (idx >= 0 && idx < size() ? pTimestampPattern.get(idx) : null);
     }
-    
+
     public synchronized Fields[] getTimeStampGroupOrder(int idx) {
         return (idx >= 0 && idx < size() ? pTimestampGroupOrder.get(idx) : null);
     }
-    
-    public synchronized String getTimeStampFromLine(String s, Pattern newSamplesHeader, 
-            long interval, boolean trim) {
-        for(int i=0; i<size(); i++) {
-        	if (numberOfTimestampsFound >= TIMESTAMP_MATCHING_ATTEMPTS && (i >= matchedTimestamps.size() || !matchedTimestamps.get(i))) {
-        		continue; // we've found plenty of timestamps, but never this one... so let's not check for it any more
-        	}
+
+    public synchronized String getTimeStampFromLine(String s, Pattern newSamplesHeader, long interval, boolean trim) {
+        for (int i = 0; i < size(); i++) {
+            if (numberOfTimestampsFound >= TIMESTAMP_MATCHING_ATTEMPTS
+                    && (i >= matchedTimestamps.size() || !matchedTimestamps.get(i))) {
+                continue; // we've found plenty of timestamps, but never this one... so let's not check
+                          // for it any more
+            }
 
             Matcher m = getTimeStampPattern(i).matcher(s);
             if (m.matches()) {
@@ -173,14 +176,14 @@ public class TimeStamp {
                 Fields[] fields = getTimeStampGroupOrder(i);
                 if (onlyTsWithDate) {
                     boolean dateInPattern = false;
-                    for (int j=0; j<fields.length; j++) {
-                        switch(fields[j]) {
-                            case year:
-                            case month:
-                            case nameOfMonth:
-                            case day:
-                                dateInPattern = true;
-                                break;
+                    for (int j = 0; j < fields.length; j++) {
+                        switch (fields[j]) {
+                        case year:
+                        case month:
+                        case nameOfMonth:
+                        case day:
+                            dateInPattern = true;
+                            break;
                         }
                     }
                     if (!dateInPattern) {
@@ -189,76 +192,76 @@ public class TimeStamp {
                 }
 
                 numberOfTimestampsFound++;
-                for (int g=0; g<m.groupCount(); g++) {
+                for (int g = 0; g < m.groupCount(); g++) {
                     if (g < fields.length) {
-                        switch(fields[g]) {
-                            case year:
-                                YY = Integer.parseInt(m.group(g+1));
-                                break;
-                            case month:
-                                MM = Integer.parseInt(m.group(g+1));
-                                break;
-                            case nameOfMonth:
-                                String month = m.group(g+1);
-                                if (month.equals("Jan")) {
-                                    MM = 1;
-                                } else if (month.equals("Feb")) {
-                                    MM = 2;
-                                } else if (month.equals("Mar")) {
-                                    MM = 3;
-                                } else if (month.equals("Apr")) {
-                                    MM = 4;
-                                } else if (month.equals("May")) {
-                                    MM = 5;
-                                } else if (month.equals("Jun")) {
-                                    MM = 6;
-                                } else if (month.equals("Jul")) {
-                                    MM = 7;
-                                } else if (month.equals("Aug")) {
-                                    MM = 8;
-                                } else if (month.equals("Sep")) {
-                                    MM = 9;
-                                } else if (month.equals("Oct")) {
-                                    MM = 10;
-                                } else if (month.equals("Nov")) {
-                                    MM = 11;
-                                } else if (month.equals("Dec")) {
-                                    MM = 12;
-                                }
-                                break;
-                            case day:
-                                DD = Integer.parseInt(m.group(g+1));
-                                patternWithDay = true;
-                                break;
-                            case hour:
-                                hh = Integer.parseInt(m.group(g+1));
-                                break;
-                            case minute:
-                                mm = Integer.parseInt(m.group(g+1));
-                                break;
-                            case second:
-                                ss = Integer.parseInt(m.group(g+1));
-                                break;
-                            case ms:
-                                ms = Integer.parseInt(m.group(g+1));
-                                break;
-                            case ampm:
-                                String aps = m.group(g+1).toLowerCase();
-                                if (aps != null && aps.equals("am") && hh == 12) {
-                                    hh -= 12;
-                                }
-                                if (aps != null && aps.equals("pm") && hh != 12) {
-                                    hh += 12;
-                                }
-                                break;
-                            case unixms:
-                                set(Long.parseLong(m.group(g+1)));
-                                patternWithDay = true;
-                                break;
-                            case unixsec:
-                                set(Long.parseLong(m.group(g+1)) * 1000l);
-                                patternWithDay = true;
-                                break;
+                        switch (fields[g]) {
+                        case year:
+                            YY = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case month:
+                            MM = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case nameOfMonth:
+                            String month = m.group(g + 1);
+                            if (month.equals("Jan")) {
+                                MM = 1;
+                            } else if (month.equals("Feb")) {
+                                MM = 2;
+                            } else if (month.equals("Mar")) {
+                                MM = 3;
+                            } else if (month.equals("Apr")) {
+                                MM = 4;
+                            } else if (month.equals("May")) {
+                                MM = 5;
+                            } else if (month.equals("Jun")) {
+                                MM = 6;
+                            } else if (month.equals("Jul")) {
+                                MM = 7;
+                            } else if (month.equals("Aug")) {
+                                MM = 8;
+                            } else if (month.equals("Sep")) {
+                                MM = 9;
+                            } else if (month.equals("Oct")) {
+                                MM = 10;
+                            } else if (month.equals("Nov")) {
+                                MM = 11;
+                            } else if (month.equals("Dec")) {
+                                MM = 12;
+                            }
+                            break;
+                        case day:
+                            DD = Integer.parseInt(m.group(g + 1));
+                            patternWithDay = true;
+                            break;
+                        case hour:
+                            hh = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case minute:
+                            mm = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case second:
+                            ss = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case ms:
+                            ms = Integer.parseInt(m.group(g + 1));
+                            break;
+                        case ampm:
+                            String aps = m.group(g + 1).toLowerCase();
+                            if (aps != null && aps.equals("am") && hh == 12) {
+                                hh -= 12;
+                            }
+                            if (aps != null && aps.equals("pm") && hh != 12) {
+                                hh += 12;
+                            }
+                            break;
+                        case unixms:
+                            set(Long.parseLong(m.group(g + 1)), true);
+                            patternWithDay = true;
+                            break;
+                        case unixsec:
+                            set(Long.parseLong(m.group(g + 1)) * 1000l, true);
+                            patternWithDay = true;
+                            break;
                         }
                     }
                 }
@@ -266,10 +269,10 @@ public class TimeStamp {
                 mm += offMM;
                 ss += offSS;
                 if (offHH > 0 || offMM > 0 || offSS > 0) {
-                    ensureCorrectTime( (offHH*3600+offMM*60+offSS> 0 ? 1 : -1) );
+                    ensureCorrectTime((offHH * 3600 + offMM * 60 + offSS > 0 ? 1 : -1));
                 }
-                
-                if (hh < (lastHour-12) && DD == lastDay && !patternWithDay) {
+
+                if (hh < (lastHour - 12) && DD == lastDay && !patternWithDay) {
                     // new day (timestamp pattern with only time, no date)
                     // we check if "hh < (lastHour-10)" to make sure that slightly unsorted
                     // time data like "23:59:58 -> 00:00:00 -> 23:59:59" isn't considered as
@@ -278,7 +281,7 @@ public class TimeStamp {
                     DD++;
                     ensureCorrectTime(1);
                 }
-                
+
                 if (trim) {
                     int begin = m.start(1);
                     int end = m.end(m.groupCount());
@@ -287,16 +290,15 @@ public class TimeStamp {
                 }
 
                 if (numberOfTimestampsFound <= TIMESTAMP_MATCHING_ATTEMPTS) {
-            	    setMatched(i);
+                    setMatched(i);
                 }
-                
+
                 return s;
             }
         }
-        
+
         if (numberOfTimestampsFound < 2 && newSamplesHeader != null) {
-            if (newSamplesHeader.matcher(s).matches() && ++numberOfHeadersFound > 1
-                    && interval > 0) {
+            if (newSamplesHeader.matcher(s).matches() && ++numberOfHeadersFound > 1 && interval > 0) {
                 ss += interval;
                 ensureCorrectTime(1);
                 return s;
@@ -305,16 +307,20 @@ public class TimeStamp {
 
         return s;
     }
-    
+
     private void setMatched(int i) {
-    	while (i >= matchedTimestamps.size()) {
-    		matchedTimestamps.add(false);
-    	}
-    	matchedTimestamps.set(i, true);
+        while (i >= matchedTimestamps.size()) {
+            matchedTimestamps.add(false);
+        }
+        matchedTimestamps.set(i, true);
     }
-    
+
     public void set(long timestamp) {
-        Calendar cal = new GregorianCalendar();
+        set(timestamp, false);
+    }
+
+    public void set(long timestamp, boolean utc) {
+        Calendar cal = (utc ? new GregorianCalendar(TimeZone.getTimeZone("UTC")) : new GregorianCalendar());
         cal.setTimeInMillis(timestamp);
         DD = cal.get(Calendar.DAY_OF_MONTH);
         MM = cal.get(Calendar.MONTH) + 1;
@@ -324,11 +330,11 @@ public class TimeStamp {
         ss = cal.get(Calendar.SECOND);
         ms = cal.get(Calendar.MILLISECOND);
     }
-    
+
     public void set(int year, int month, int day, int hour, int minute, int second) {
         Calendar cal = new GregorianCalendar();
         cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month-1);
+        cal.set(Calendar.MONTH, month - 1);
         cal.set(Calendar.DAY_OF_MONTH, day);
         cal.set(Calendar.HOUR_OF_DAY, hour);
         cal.set(Calendar.MINUTE, minute);
@@ -342,7 +348,7 @@ public class TimeStamp {
         ss = cal.get(Calendar.SECOND);
         ms = cal.get(Calendar.MILLISECOND);
     }
-    
+
     public void setToNow() {
         GregorianCalendar cal = new GregorianCalendar();
         YY = cal.get(Calendar.YEAR);
@@ -399,9 +405,7 @@ public class TimeStamp {
                 hh -= 24;
                 DD++;
             }
-            if (DD > 31
-                    || (DD > 30 && (MM == 4 || MM == 6 || MM == 9 || MM == 11))
-                    || (DD > 29 && MM == 2)
+            if (DD > 31 || (DD > 30 && (MM == 4 || MM == 6 || MM == 9 || MM == 11)) || (DD > 29 && MM == 2)
                     || (DD > 28 && MM == 2 && YY % 4 != 0)) {
                 DD = 1;
                 MM++;
@@ -431,8 +435,7 @@ public class TimeStamp {
             if (DD < 0) {
                 MM--;
                 DD = (MM == 4 || MM == 6 || MM == 9 || MM == 11 ? 30
-                        : (MM == 2 && YY % 4 == 0 ? 29
-                        : (MM == 2 && YY % 4 != 0 ? 28 : 31)));
+                        : (MM == 2 && YY % 4 == 0 ? 29 : (MM == 2 && YY % 4 != 0 ? 28 : 31)));
             }
             if (MM < 0) {
                 MM = 12;
@@ -440,19 +443,18 @@ public class TimeStamp {
             }
         }
     }
-    
+
     public long getTimeStamp() {
         return createTimeStamp(YY, MM, DD, hh, mm, ss, ms);
     }
-    
+
     public String toString() {
         return toString(true);
     }
-    
+
     public String toString(boolean withMs) {
-        return Util.digits(YY, 4) + "-" + Util.digits(MM, 2) + "-" + Util.digits(DD, 2) + " " + 
-               Util.digits(hh, 2) + ":" + Util.digits(mm, 2) + ":" + Util.digits(ss, 2) + 
-               (withMs ? "," + Util.digits(ms, 3) : "");
+        return Util.digits(YY, 4) + "-" + Util.digits(MM, 2) + "-" + Util.digits(DD, 2) + " " + Util.digits(hh, 2) + ":"
+                + Util.digits(mm, 2) + ":" + Util.digits(ss, 2) + (withMs ? "," + Util.digits(ms, 3) : "");
     }
 
     public static long createTimeStamp(int YY, int MM, int DD, int hh, int mm, int ss, int ms) {

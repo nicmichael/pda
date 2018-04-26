@@ -132,6 +132,9 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
         DataSeriesPropertySet prop = projectItem.getSeriesProperties();
         for (int i = 0; i < prop.size(); i++) {
             DataSeriesProperties dp = prop.getDataProperties(i);
+            if (!dp.isVisible()) {
+                continue;
+            }
             Layer l = createLayer(dp);
             if (l != null) {
                 this.add(l);
@@ -232,7 +235,7 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
         return layer;
     }
     
-    public synchronized void updateLayer(DataSeriesProperties prop, boolean highlight) {
+    public synchronized void updateLayerHighlight(DataSeriesProperties prop, boolean highlight) {
         Layer l = (series2layer != null ? series2layer.get(prop.getName()) : null);
         if (l != null) {
             double scaleMin = prop.getScaleMin();

@@ -48,6 +48,7 @@ public class DataSeriesProperties {
     private String name;
     private String displayName;
     private Color color;
+    private boolean visible = true;
     private double scaleMin;
     private double scaleMax;
     private int style;
@@ -139,6 +140,14 @@ public class DataSeriesProperties {
         return color;
     }
     
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
     public void setLineWidth(int width) {
         this.lineWidth = width;
         if (lineWidth > 1) {
