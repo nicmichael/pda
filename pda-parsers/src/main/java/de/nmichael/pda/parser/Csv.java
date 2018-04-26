@@ -10,9 +10,11 @@
 
 package de.nmichael.pda.parser;
 
+import de.nmichael.pda.Logger;
 import de.nmichael.pda.data.*;
 import de.nmichael.pda.data.TimeStamp.Fields;
 import de.nmichael.pda.util.Util;
+import sun.rmi.runtime.Log;
 
 import java.util.regex.*;
 import java.util.*;
@@ -78,7 +80,7 @@ public class Csv extends Parser {
 		if (s != null) {
 			s = s.trim();
 			myDelimiter = getDelimiter(s, new String[] { delimiter, ";", ",", "|" });
-			StringTokenizer tok = new StringTokenizer(s, delimiter);
+			StringTokenizer tok = new StringTokenizer(s, myDelimiter);
 			int i = 0;
 			while (tok.hasMoreTokens()) {
 				String cn = tok.nextToken();
@@ -94,6 +96,7 @@ public class Csv extends Parser {
 	// @Override
 	public void parse() {
 		try {
+			Logger.log(Logger.LogType.debug, "Parsing " + getFilename() + " with " + (series != null ? series.size() : 0) + " series using delimiter: " + myDelimiter);
 			String s;
 			while ((s = readLine()) != null) {
 				s = s.trim();
