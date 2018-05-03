@@ -1,5 +1,5 @@
 /**
-* Title:        Performance Data Analyzer (PDA)
+ * Title:        Performance Data Analyzer (PDA)
 * Copyright:    Copyright (c) 2006-2013 by Nicolas Michael
 * Website:      http://pda.nmichael.de/
 * License:      GNU General Public License v2
@@ -16,7 +16,10 @@ import java.util.*;
 
 public class Nicstat extends Parser {
     
-    private Pattern p = Pattern.compile("[0-9][0-9]:[0-9][0-9]:[0-9][0-9] +([^ ]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+)");
+    private String[] seriesNames;
+    private Pattern pHeader = Pattern.compile("( +Time.*|[0-9][0-9]:[0-9][0-9]:[0-9][0-9] +[^0-9]+)");
+    private Pattern pData = Pattern.compile("[0-9][0-9]:[0-9][0-9]:[0-9][0-9] +([a-zA-Z][^ ]+) +[0-9]+.*");
+    private Pattern pDataX = Pattern.compile("([a-zA-Z][^ ]+) +[0-9]+.*");
     
     // @Override
     public boolean canHandle(String filename) {
@@ -26,7 +29,7 @@ public class Nicstat extends Parser {
     public Nicstat() {
         super("nicstat");
         setSupportedFileFormat(new FileFormatDescription(
-                FileFormatDescription.PRODUCT_SOLARIS,
+                FileFormatDescription.PRODUCT_SOLARIS + "/" + FileFormatDescription.PRODUCT_LINUX,
                 null,
                 "nictsat",
                 null,
@@ -35,17 +38,15 @@ public class Nicstat extends Parser {
         setDefaultInterval(10); // in case data has no timestamps
     }
    
-    private void createSeries(String category) {
-        series().addSeries(category, "", "rKB/s");
-        series().addSeries(category, "", "wKB/s");
-        series().addSeries(category, "", "rPk/s");
-        series().addSeries(category, "", "wPk/s");
-        series().addSeries(category, "", "rAvs");
-        series().addSeries(category, "", "wAvs");
-        series().addSeries(category, "", "%Util");
-        series().addSeries(category, "", "Sat");
-        series().addSeries(category, "", "KB/s");
-        series().addSeries(category, "", "Pk/s");
+    private void createSeries(String category, int offset) {
+        for (int i=offset; i<seriesNames.length; i++) {
+            DataSeries ser = series().addSeries(category, "", seriesNames[i]);
+            logDebug("createSeries: " + (ser != null ? ser.getName() : "duplicate series: " + category + "::" + seriesNames[i]));
+        }
+    }
+    
+    private boolean isHeader(String s) {
+        return pHeader.matcher(s).matches();
     }
 
     // @Override
@@ -54,9 +55,16 @@ public class Nicstat extends Parser {
             int i=0;
             String s;
             while ((s = readLine()) != null) {
-                Matcher m = p.matcher(s);
-                if (m.matches()) {
-                    createSeries(m.group(1));
+                if (seriesNames == null && isHeader(s)) {
+                    seriesNames = s.trim().split(" +");
+                }
+                Matcher m = pData.matcher(s);
+                if (m.matches() && seriesNames != null) {
+                    createSeries(m.group(1), 2);
+                }
+                m = pDataX.matcher(s);
+                if (m.matches() && seriesNames != null) {
+                    createSeries(m.group(1), 1);
                 }
                 if (i++ >= 1000) {
                     break;
@@ -69,12 +77,14 @@ public class Nicstat extends Parser {
     
     // @Override
     public void parse() {
+        if (seriesNames == null) {
+            return;
+        }
         try {
             String s;
-            
             int cnt = 0;
             while( (s = readLine()) != null) {
-                if (s.startsWith("    Time")) {
+                if (isHeader(s)) {
                     if (++cnt == 2) {
                         break;
                     }
@@ -83,37 +93,34 @@ public class Nicstat extends Parser {
 
             while ((s = readLine()) != null) {
                 long t = getCurrentTimeStamp().getTimeStamp();
-                Matcher m = p.matcher(s);
+                int offset = 2;
+                Matcher m = pData.matcher(s);
+                if (!m.matches()) {
+                    m = pDataX.matcher(s);
+                    offset = 1;
+                }
                 if (m.matches()) {
                     String device = m.group(1);
-                    float rKBs = Float.parseFloat(m.group(2));
-                    float wKBs = Float.parseFloat(m.group(3));
-                    float rPks = Float.parseFloat(m.group(4));
-                    float wPks = Float.parseFloat(m.group(5));
-                    float rAvs = Float.parseFloat(m.group(6));
-                    float wAvs = Float.parseFloat(m.group(7));
-                    float Util = Float.parseFloat(m.group(8));
-                    float Sat = Float.parseFloat(m.group(9));
-                    float KBs = rKBs + wKBs;;
-                    float Pks = rPks + wPks;
-                    series().addSampleIfNeeded(device, "", "rKB/s", t, rKBs);
-                    series().addSampleIfNeeded(device, "", "wKB/s", t, wKBs);
-                    series().addSampleIfNeeded(device, "", "rPk/s", t, rPks);
-                    series().addSampleIfNeeded(device, "", "wPk/s", t, wPks);
-                    series().addSampleIfNeeded(device, "", "rAvs",  t, rAvs);
-                    series().addSampleIfNeeded(device, "", "wAvs",  t, wAvs);
-                    series().addSampleIfNeeded(device, "", "%Util", t, Util);
-                    series().addSampleIfNeeded(device, "", "Sat",   t, Sat);
-                    series().addSampleIfNeeded(device, "", "KB/s",  t, KBs);
-                    series().addSampleIfNeeded(device, "", "Pk/s",  t, Pks);
+                    String[] values = s.split(" +");
+                    for (int i = offset; i < values.length && i - offset < seriesNames.length; i++) {
+                        try {
+                            series().addSampleIfNeeded(device, "", seriesNames[i], t,
+                                    Float.parseFloat(values[i]));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
-            
+
             series().setPreferredScaleSame(new String[] { "rKB/s", "wKB/s", "KB/s" });
             series().setPreferredScaleSame(new String[] { "rPk/s", "wPk/s" });
             series().setPreferredScaleSame(new String[] { "rAvs", "wAvs", "Pk/s" });
             series().setPreferredScaleSeries("%Util", 0, 100);
             series().setPreferredScaleSame(new String[] { "Sat" });
+            series().setPreferredScaleSame(new String[] { "RdKB", "WrKB" });
+            series().setPreferredScaleSame(new String[] { "RdPkt", "WrPkt" });
+            series().setPreferredScaleSame(new String[] { "RdMbps", "WrMbps" });
         } catch(Exception e) {
             logError(e.toString());
         }
