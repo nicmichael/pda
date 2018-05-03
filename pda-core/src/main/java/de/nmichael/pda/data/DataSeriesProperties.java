@@ -21,6 +21,7 @@ public class DataSeriesProperties {
     public static final String XML_NAME            = "Name";
     public static final String XML_DISPLAYNAME     = "DisplayName";
     public static final String XML_COLOR           = "Color";
+    public static final String XML_VISIBLE         = "Visible";
     public static final String XML_SCALE_MIN       = "ScaleMin";
     public static final String XML_SCALE_MAX       = "ScaleMax";
     public static final String XML_STYLE           = "Style";
@@ -48,7 +49,7 @@ public class DataSeriesProperties {
     private String name;
     private String displayName;
     private Color color;
-    private boolean visible = true;
+    private boolean visible;
     private double scaleMin;
     private double scaleMax;
     private int style;
@@ -59,9 +60,10 @@ public class DataSeriesProperties {
     
     public DataSeriesProperties(DataSeries dataSeries) {
         this.series = dataSeries;
-        name = series.getName();
-        setDisplayName(series.getLocalName());
+        name = series != null ? series.getName() : null;
+        setDisplayName(series != null ? series.getLocalName() : null);
         color = Color.blue;
+        visible = true;
         scaleMin = 0.0;
         scaleMax = 100.0;
         style = STYLE_LINE;
@@ -76,6 +78,7 @@ public class DataSeriesProperties {
         prop.name = name;
         prop.displayName = displayName;
         prop.color = color;
+        prop.visible = visible;
         prop.scaleMin = scaleMin;
         prop.scaleMax = scaleMax;
         prop.style = style;
@@ -116,11 +119,13 @@ public class DataSeriesProperties {
     
     public void setDisplayName(String name) {
         this.displayName = name;
-        while (displayName.startsWith(DataSeries.SEPARATOR)) {
-            displayName = displayName.substring(1);
-        }
-        while (displayName.endsWith(DataSeries.SEPARATOR)) {
-            displayName = displayName.substring(0, displayName.length()-1);
+        if (name != null) {
+            while (displayName.startsWith(DataSeries.SEPARATOR)) {
+                displayName = displayName.substring(1);
+            }
+            while (displayName.endsWith(DataSeries.SEPARATOR)) {
+                displayName = displayName.substring(0, displayName.length() - 1);
+            }
         }
     }
     
@@ -269,6 +274,7 @@ public class DataSeriesProperties {
         s.append(XMLHelper.xmlTag(XML_NAME, name));
         s.append(XMLHelper.xmlTag(XML_DISPLAYNAME, displayName));
         s.append(XMLHelper.xmlTag(XML_COLOR, Util.getColor(color)));
+        s.append(XMLHelper.xmlTag(XML_VISIBLE, Boolean.toString(visible)));
         s.append(XMLHelper.xmlTag(XML_SCALE_MIN, Double.toString(scaleMin)));
         s.append(XMLHelper.xmlTag(XML_SCALE_MAX, Double.toString(scaleMax)));
         s.append(XMLHelper.xmlTag(XML_STYLE, STYLES[style]));
@@ -301,6 +307,10 @@ public class DataSeriesProperties {
         e = ProjectFile.getChildNode(groupElement, XML_COLOR);
         if (e != null) {
             p.setColor(Util.getColor(e.getTextContent().trim()));
+        }
+        e = ProjectFile.getChildNode(groupElement, XML_VISIBLE);
+        if (e != null) {
+            p.setVisible(Boolean.parseBoolean(e.getTextContent().trim()));
         }
         e = ProjectFile.getChildNode(groupElement, XML_SCALE_MIN);
         if (e != null) {

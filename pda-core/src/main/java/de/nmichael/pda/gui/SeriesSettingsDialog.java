@@ -41,6 +41,16 @@ public class SeriesSettingsDialog extends BaseDialog {
     private JComboBox valueAxis = new JComboBox();
     private JTextField smooth = new JTextField();
     
+    // changed values
+    private boolean changedMin = false;
+    private boolean changedMax = false;
+    private boolean changedColor = false;
+    private boolean changedStyle = false;
+    private boolean changedLineStyle = false;
+    private boolean changedLineWidth = false;
+    private boolean changedSmooth = false;
+    private boolean changedValueAxis = false;
+    
     public SeriesSettingsDialog(JDialog parent, DataSeriesProperties prop) {
         super(parent, "Series Settings");
         this.prop = prop;
@@ -195,26 +205,48 @@ public class SeriesSettingsDialog extends BaseDialog {
     }
     
     void iniData() {
-        name.setText(prop.getName());
-        displayname.setText(prop.getDisplayName());
-        rangeYMin.setText(Double.toString(prop.getScaleMin()));
-        rangeYMax.setText(Double.toString(prop.getScaleMax()));
-        color.setText(Util.getColor(prop.getColor()));
-        updateColor(color);
-        for (int i=0; i<DataSeriesProperties.STYLES.length; i++) {
-            style.addItem(DataSeriesProperties.STYLES[i]);
+        if (prop.getName() != null) {
+            // normal editing of a single series properties
+            name.setText(prop.getName());
+            displayname.setText(prop.getDisplayName());
+            rangeYMin.setText(Double.toString(prop.getScaleMin()));
+            rangeYMax.setText(Double.toString(prop.getScaleMax()));
+            color.setText(Util.getColor(prop.getColor()));
+            updateColor(color);
+            for (int i = 0; i < DataSeriesProperties.STYLES.length; i++) {
+                style.addItem(DataSeriesProperties.STYLES[i]);
+            }
+            style.setSelectedIndex(prop.getStyle());
+            for (int i = 0; i < DataSeriesProperties.LINESTYLES.length; i++) {
+                lineStyle.addItem(DataSeriesProperties.LINESTYLES[i]);
+            }
+            lineStyle.setSelectedIndex(prop.getLineStyle());
+            lineWidth.setText(Integer.toString(prop.getLineWidth()));
+            smooth.setText(Integer.toString(prop.getSmooth()));
+            for (int i = 0; i < DataSeriesProperties.VALUEAXIS.length; i++) {
+                valueAxis.addItem(DataSeriesProperties.VALUEAXIS[i]);
+            }
+            valueAxis.setSelectedIndex(prop.getValueAxis());
+        } else {
+            // we're "batch-editing" a bunch of properties. leave things empty
+            name.setVisible(false);
+            displayname.setVisible(false);
+            for (int i = 0; i < DataSeriesProperties.STYLES.length; i++) {
+                style.addItem(DataSeriesProperties.STYLES[i]);
+            }
+            style.addItem("");
+            style.setSelectedIndex(DataSeriesProperties.STYLES.length);
+            for (int i = 0; i < DataSeriesProperties.LINESTYLES.length; i++) {
+                lineStyle.addItem(DataSeriesProperties.LINESTYLES[i]);
+            }
+            lineStyle.addItem("");
+            lineStyle.setSelectedIndex(DataSeriesProperties.LINESTYLES.length);
+            for (int i = 0; i < DataSeriesProperties.VALUEAXIS.length; i++) {
+                valueAxis.addItem(DataSeriesProperties.VALUEAXIS[i]);
+            }
+            valueAxis.addItem("");
+            valueAxis.setSelectedIndex(DataSeriesProperties.VALUEAXIS.length);
         }
-        style.setSelectedIndex(prop.getStyle());
-        for (int i=0; i<DataSeriesProperties.LINESTYLES.length; i++) {
-            lineStyle.addItem(DataSeriesProperties.LINESTYLES[i]);
-        }
-        lineStyle.setSelectedIndex(prop.getLineStyle());
-        lineWidth.setText(Integer.toString(prop.getLineWidth()));
-        smooth.setText(Integer.toString(prop.getSmooth()));
-        for (int i=0; i<DataSeriesProperties.VALUEAXIS.length; i++) {
-            valueAxis.addItem(DataSeriesProperties.VALUEAXIS[i]);
-        }
-        valueAxis.setSelectedIndex(prop.getValueAxis());
     }
     
     void choseColor() {
@@ -256,27 +288,66 @@ public class SeriesSettingsDialog extends BaseDialog {
             prop.setDisplayName(displayname.getText().trim());
             try {
                 prop.setScaleMin(Double.parseDouble(rangeYMin.getText().trim()));
+                changedMin = rangeYMin.getText().trim().length() > 0;
             } catch (Exception ee) {
             }
             try {
                 prop.setScaleMax(Double.parseDouble(rangeYMax.getText().trim()));
+                changedMax = rangeYMax.getText().trim().length() > 0;
             } catch (Exception ee) {
             }
             prop.setColor(Util.getColor(color.getText().trim()));
+            changedColor = color.getText().trim().length() > 0;
             prop.setStyle(style.getSelectedIndex());
+            changedStyle = style.getSelectedIndex() >= 0 && style.getSelectedItem().toString().length() > 0;
             try {
                 prop.setLineWidth(Util.string2int(lineWidth.getText().trim(), 2));
+                changedLineWidth = lineWidth.getText().trim().length() > 0;
             } catch (Exception ee) {
             }
             prop.setLineStyle(lineStyle.getSelectedIndex());
+            changedLineStyle = lineStyle.getSelectedIndex() >= 0 && lineStyle.getSelectedItem().toString().length() > 0;
             try {
                 prop.setSmooth(Util.string2int(smooth.getText().trim(), DataSeriesProperties.LINESTYLE_SOLID));
+                changedSmooth = smooth.getText().trim().length() > 0;
             } catch (Exception ee) {
             }
             prop.setValueAxis(valueAxis.getSelectedIndex());
+            changedValueAxis = valueAxis.getSelectedIndex() >= 0 && valueAxis.getSelectedItem().toString().length() > 0;
         }
         super.closeWindow(okButton);
     }
 
+    public boolean isChangedMin() {
+        return changedMin;
+    }
+
+    public boolean isChangedMax() {
+        return changedMax;
+    }
+    
+    public boolean isChangedColor() {
+        return changedColor;
+    }
+    
+    public boolean isChangedStyle() {
+        return changedStyle;
+    }
+    
+    public boolean isChangedLineStyle() {
+        return changedLineStyle;
+    }
+    
+    public boolean isChangedLineWidth() {
+        return changedLineWidth;
+    }
+    
+    public boolean isChangedSmooth() {
+        return changedSmooth;
+    }
+    
+    public boolean isChangedValueAxis() {
+        return changedValueAxis;
+    }
     
 }

@@ -152,6 +152,11 @@ public abstract class Parser {
         Logger.log(Logger.LogType.error, "Parser " + getName() + " [" + filename + "]: " + msg);
     }
 
+    public void logError(String msg, Exception e) {
+        Logger.log(Logger.LogType.error, "Parser " + getName() + " [" + filename + "]: " + msg +
+                ", Exception: " + e + "\n" + (e != null ? Util.stackTraceToString(e.getStackTrace(), 5) : ""));
+    }
+
     public void logWarning(String msg) {
         Logger.log(Logger.LogType.warning, "Parser " + getName() + " [" + filename + "]: " + msg);
     }
@@ -449,6 +454,18 @@ public abstract class Parser {
             }
         }
         return cols;
+    }
+    
+    protected String[] splitStringToSeriesNameParts(String s) {
+        String[] parts = (s.split(":").length >= 3 ? s.split(":") : s.split("[:\\.]"));
+        String[] names = new String[3];
+        Arrays.fill(names, "");
+        for (int i=0; i<parts.length; i++) {
+            int idx = i<3 ? i : 2;
+            names[idx] = (names[idx].length() == 0 ? parts[i] :
+                names[idx] + "_" + parts[i]);
+        }
+        return names;
     }
 
     public String[] getParameterNames() {

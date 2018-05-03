@@ -388,4 +388,23 @@ public class Util {
         }
     }
     
+    public static String stackTraceToString(StackTraceElement[] stack) {
+        return stackTraceToString(stack, Integer.MAX_VALUE);
+    }
+    
+    public static String stackTraceToString(StackTraceElement[] stack, int maxElements) {
+        if (stack == null) {
+            return null;
+        }
+        StringBuilder s = new StringBuilder();
+        int c = 0;
+        for (StackTraceElement e : stack) {
+            s.append((s.length() > 0 ? "\n" : "") + e.getClassName() + "." + e.getMethodName() + "():" + e.getLineNumber());
+            if (++c == maxElements) {
+                break;
+            }
+        }
+        return s.toString();
+    }
+    
 }

@@ -141,6 +141,16 @@ public class SelectSeriesDialog extends BaseDialog {
             }
         });
         filterPanel.add(onlySeriesWithData,new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        
+        JButton configureSettingsButton = new JButton();
+        configureSettingsButton.setText("Configure Series Properties");
+        configureSettingsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                configureSeriesProperties();
+            }
+        });
+        filterPanel.add(configureSettingsButton,new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
         
         mainPanel.add(filterPanel, BorderLayout.SOUTH);
@@ -251,6 +261,62 @@ public class SelectSeriesDialog extends BaseDialog {
                 ser.setSelected(false);
             } catch(Exception eignore) {
             }
+        }
+        updateLists();
+    }
+    
+    void configureSeriesProperties() {
+        int[] idx = selectedSeries.getSelectedIndices();
+        if (idx == null || idx.length == 0) {
+            BaseDialog.errorDlg(this, "No series (on right-hand side) selected.");
+            return;
+        }
+        DataSeriesProperties[] props = new DataSeriesProperties[idx.length]; 
+        for (int i=0; idx != null && i<idx.length; i++) {
+            try {
+                String s = selected.get(idx[i]);
+                DataSeries ser = projectItem.getSeries(s);
+                if (ser.getDataProperties() == null) {
+                    if (!ser.findDataProperties(propertySet)) {
+                        ser.createDataProperties(propertySet, colorSelector);
+                    }
+                }
+                props[i] = ser.getDataProperties();
+            } catch(Exception eignore) {
+            }
+        }
+        DataSeriesProperties newProps = new DataSeriesProperties(null); 
+        SeriesSettingsDialog settingsDlg = new SeriesSettingsDialog(this, newProps);
+        if (settingsDlg.showDialog()) {
+            for (DataSeriesProperties prop : props) {
+                if (prop == null) {
+                    continue;
+                }
+                if (settingsDlg.isChangedMin()) {
+                    prop.setScaleMin(newProps.getScaleMin());
+                }
+                if (settingsDlg.isChangedMax()) {
+                    prop.setScaleMax(newProps.getScaleMax());
+                }
+                if (settingsDlg.isChangedColor()) {
+                    prop.setColor(newProps.getColor());
+                }
+                if (settingsDlg.isChangedLineStyle() && newProps.getLineStyle() != -1) {
+                    prop.setLineStyle(newProps.getLineStyle());
+                }
+                if (settingsDlg.isChangedLineWidth() && newProps.getLineWidth() != -1) {
+                    prop.setLineWidth(newProps.getLineWidth());
+                }
+                if (settingsDlg.isChangedStyle() && newProps.getStyle() != -1) {
+                    prop.setStyle(newProps.getStyle());
+                }
+                if (settingsDlg.isChangedSmooth()) {
+                    prop.setSmooth(newProps.getSmooth());
+                }
+                if (settingsDlg.isChangedValueAxis()) {
+                    prop.setValueAxis(newProps.getValueAxis());
+                }
+            } 
         }
         updateLists();
     }

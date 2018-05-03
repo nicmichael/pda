@@ -248,7 +248,11 @@ public class DataSeries implements Comparable {
     }
     
     public boolean addSampleIfNeeded(long ts, double value) {
+        setHasBeenScanned();
         if (!isSamplesNeeded()) {
+            if (value != 0) {
+                setHasNonZeroSamples();
+            }
             return false;
         }
         addSample(new Sample(ts, value));

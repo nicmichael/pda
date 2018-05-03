@@ -237,6 +237,9 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
     
     public synchronized void updateLayerHighlight(DataSeriesProperties prop, boolean highlight) {
         Layer l = (series2layer != null ? series2layer.get(prop.getName()) : null);
+        if (!prop.isVisible() && l == null) {
+            l = createLayer(prop);            
+        }
         if (l != null) {
             double scaleMin = prop.getScaleMin();
             double scaleMax = prop.getScaleMax();
@@ -245,6 +248,7 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
             }
             if (highlight) {
                 prop = prop.clone();
+                prop.setLineStyle(DataSeriesProperties.LINESTYLE_STRONG);
                 prop.setLineWidth(5);
             }
             CartesianGraph g = createGraph(l, prop, prop.getDisplayName(), scaleMin, scaleMax);
@@ -254,6 +258,14 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
             }
             l.setGraph(g);
             try {
+                if (!prop.isVisible()) {
+                    // add and re-hide layer that's been marked invisible
+                    if (highlight) {
+                        this.add(l);
+                    } else {
+                        this.remove(l);
+                    }
+                }
                 if (highlight) {
                     l.draw(this.getGraphics());
                 } else {

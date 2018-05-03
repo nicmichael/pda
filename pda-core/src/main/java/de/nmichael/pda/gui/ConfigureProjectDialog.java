@@ -37,11 +37,17 @@ public class ConfigureProjectDialog extends BaseDialog {
     private JScrollPane seriesScrollPane = new JScrollPane();
     private JPanel seriesPanel = null;
     
+    // dimensions
+    int maxWidth;
+    int maxHeight;
+    
     
     public ConfigureProjectDialog(JFrame parent, ProjectItem projectItem) {
         super(parent, "Configure Project");
         this.projectItem = projectItem;
         this.colorSelector = new ColorSelector();
+        this.maxWidth = parent.getWidth();
+        this.maxHeight = parent.getHeight();
     }
     
     private void createProjectPanel() {
@@ -121,7 +127,7 @@ public class ConfigureProjectDialog extends BaseDialog {
         
         // Parser Panel
         parserScrollPane.setMinimumSize(new Dimension(1000,100));
-        parserScrollPane.setPreferredSize(new Dimension(1000,100));
+        parserScrollPane.setPreferredSize(new Dimension(maxWidth-200,100));
         
         
         fileInnerPanel.add(fileSelectPanel, BorderLayout.NORTH);
@@ -171,7 +177,7 @@ public class ConfigureProjectDialog extends BaseDialog {
         
         // Series Panel
         seriesScrollPane.setMinimumSize(new Dimension(1000,250));
-        seriesScrollPane.setPreferredSize(new Dimension(1000,250));
+        seriesScrollPane.setPreferredSize(new Dimension(maxWidth-200,maxHeight/2));
         seriesInnerPanel.add(seriesScrollPane, BorderLayout.SOUTH);
         mainPanel.add(seriesPanel, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(10, 10, 10, 10), 0, 0));
