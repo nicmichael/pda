@@ -42,6 +42,8 @@ public class Csv extends Parser {
         setSupportedFileFormat(new FileFormatDescription(FileFormatDescription.PRODUCT_GENERIC, null, "Generic CSV",
                 null, "generic CSV format",
                 "header 'header;header;header;...' and lines '2010-03-10 06:59:42;data;data;...'"));
+        getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)"),
+                new Fields[] { Fields.unixns });
         getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d+)"),
                 new Fields[] { Fields.unixsec });
     }

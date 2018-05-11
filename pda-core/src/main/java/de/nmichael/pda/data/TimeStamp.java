@@ -22,7 +22,7 @@ public class TimeStamp {
     private static final int TIMESTAMP_MATCHING_ATTEMPTS = 10;
 
     public enum Fields {
-        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, ampm, weekday
+        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, unixns, ampm, weekday
     }
 
     // Current Timestamp
@@ -256,6 +256,10 @@ public class TimeStamp {
                             break;
                         case unixms:
                             set(Long.parseLong(m.group(g + 1)), true);
+                            patternWithDay = true;
+                            break;
+                        case unixns:
+                            set(Long.parseLong(m.group(g + 1)) / 1000000L, true);
                             patternWithDay = true;
                             break;
                         case unixsec:
