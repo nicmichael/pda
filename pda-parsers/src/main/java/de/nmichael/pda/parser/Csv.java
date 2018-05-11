@@ -42,8 +42,10 @@ public class Csv extends Parser {
         setSupportedFileFormat(new FileFormatDescription(FileFormatDescription.PRODUCT_GENERIC, null, "Generic CSV",
                 null, "generic CSV format",
                 "header 'header;header;header;...' and lines '2010-03-10 06:59:42;data;data;...'"));
-        getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)(\\d+)"),
-                new Fields[] { Fields.unixns });
+        getCurrentTimeStamp().addTimeStampPattern("YYYYMMDDhhmmss.us", Pattern.compile("(\\d\\d\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)(\\d\\d)\\.(\\d\\d\\d).*"),
+                new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second, Fields.ms });
+        getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d+)"), // 13+ digits
+                new Fields[] { Fields.unixms });
         getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d+)"),
                 new Fields[] { Fields.unixsec });
     }
@@ -106,7 +108,7 @@ public class Csv extends Parser {
             Logger.log(Logger.LogType.debug, "Parsing " + getFilename() + " with "
                     + (series != null ? series.size() : 0) + " series using delimiter: " + myDelimiter);
             String s;
-            while ((s = readLine()) != null) {
+            while ((s = readLineNoTime()) != null) {
                 s = s.trim();
                 if (s.length() > 0) {
                     StringTokenizer tok = new StringTokenizer(s, myDelimiter);

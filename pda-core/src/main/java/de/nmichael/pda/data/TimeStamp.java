@@ -11,6 +11,8 @@
 package de.nmichael.pda.data;
 
 import de.nmichael.pda.Logger;
+import de.nmichael.pda.Logger.LogType;
+
 import java.util.*;
 import java.io.*;
 import java.util.regex.*;
@@ -22,7 +24,7 @@ public class TimeStamp {
     private static final int TIMESTAMP_MATCHING_ATTEMPTS = 10;
 
     public enum Fields {
-        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, unixns, ampm, weekday
+        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, ampm, weekday
     }
 
     // Current Timestamp
@@ -110,8 +112,7 @@ public class TimeStamp {
                 new Fields[] { Fields.hour, Fields.minute, Fields.second, Fields.ampm });
 
         // TS=unixms
-        addTimeStampPattern("TS=unixms", Pattern.compile("TS=(\\d+).*"), new Fields[] { Fields.unixms });
-
+        addTimeStampPattern("TS=unixms", Pattern.compile("TS=(\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d+).*"), new Fields[] { Fields.unixms }); // 13+ digits
     }
 
     public synchronized void addTimeStampPattern(String description, Pattern pattern, Fields[] groupOrder) {
@@ -161,7 +162,8 @@ public class TimeStamp {
     }
 
     public synchronized String getTimeStampFromLine(String s, Pattern newSamplesHeader, long interval, boolean trim) {
-        for (int i = 0; i < size(); i++) {
+        boolean complete = false;
+        for (int i = 0; i < size() && !complete; i++) {
             if (numberOfTimestampsFound >= TIMESTAMP_MATCHING_ATTEMPTS
                     && (i >= matchedTimestamps.size() || !matchedTimestamps.get(i))) {
                 continue; // we've found plenty of timestamps, but never this one... so let's not check
@@ -257,14 +259,12 @@ public class TimeStamp {
                         case unixms:
                             set(Long.parseLong(m.group(g + 1)), true);
                             patternWithDay = true;
-                            break;
-                        case unixns:
-                            set(Long.parseLong(m.group(g + 1)) / 1000000L, true);
-                            patternWithDay = true;
+                            complete = true;
                             break;
                         case unixsec:
                             set(Long.parseLong(m.group(g + 1)) * 1000l, true);
                             patternWithDay = true;
+                            complete = true;
                             break;
                         }
                     }
@@ -296,6 +296,10 @@ public class TimeStamp {
                 if (numberOfTimestampsFound <= TIMESTAMP_MATCHING_ATTEMPTS) {
                     setMatched(i);
                 }
+                
+                //if (Logger.isDebugLoggin()) {
+                //    Logger.log(LogType.debug, "Found time " + Util.getTimeString(getTimeStamp()) + " using " + getTimeStampPattern(i) + " in line: " + s);
+                //}
 
                 return s;
             }

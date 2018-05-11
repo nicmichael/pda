@@ -285,11 +285,19 @@ public abstract class Parser {
         return readLine(false);
     }
     
+    protected String readLineNoTime() {
+        return readLine(false, false);
+    }
+    
     protected String readLine(boolean trimTime) {
+        return readLine(trimTime, true);
+    }
+    
+    protected String readLine(boolean trimTime, boolean withTimestamp) {
         String s = null;
         try {
             s = (f != null ? f.readLine() : null);
-            if (s != null) {
+            if (withTimestamp && s != null) {
                 return timestamp.getTimeStampFromLine(s, newSamplesHeader, interval, trimTime);
             }
             return s;

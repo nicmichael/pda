@@ -68,6 +68,22 @@ public class Logger {
         }
     }
     
+    public static void info(String s) {
+        log(LogType.info, s);
+    }
+    
+    public static void warning(String s) {
+        log(LogType.warning, s);
+    }
+    
+    public static void error(String s) {
+        log(LogType.error, s);
+    }
+    
+    public static void debug(String s) {
+        log(LogType.debug, s);
+    }
+    
     public static boolean isDebugLoggin() {
         return debugLogging;
     }

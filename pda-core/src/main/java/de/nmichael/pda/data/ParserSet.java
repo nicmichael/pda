@@ -11,12 +11,14 @@
 package de.nmichael.pda.data;
 
 import java.util.*;
+
+import de.nmichael.pda.Logger;
 import de.nmichael.pda.data.*;
 
 public class ParserSet {
     
     private Vector<Parser> parsers;
-    private Hashtable<String,Integer> parserIds = new Hashtable<String,Integer>();
+    private Hashtable<String,Parser> parserByBasename = new Hashtable<String,Parser>();
     
     public ParserSet() {
         parsers = new Vector<Parser>();
@@ -24,26 +26,22 @@ public class ParserSet {
     
     public void addParser(Parser parser) {
         String name = parser.getName();
-        
         if (name == null || name.equals(DataSeriesGroup.GROUP_PARSER_NAME)) {
             name = "default";
-            parser.setName(name);
+        }
+        String baseName = name;
+        int pos;
+        if ( (pos = name.indexOf("-")) >= 0 && pos+1 < name.length()) {
+            baseName = name.substring(0, pos);
         }
         
-        // check for duplicate names
-        Integer id = parserIds.get(name);
-        if (id == null) {
-            id = new Integer(1);
-        } else {
-            // duplicate name: rename old and new parser
-            Parser pold = getParser(name);
-            if (pold != null) {
-                pold.setName(name + "-" + id.intValue());
-            }
-            id = new Integer(id.intValue() + 1);
-            parser.setName(name + "-" + id.intValue());
+        int c = 0;
+        while (parserByBasename.get(name) != null) {
+            name = baseName + "-" + (++c);
         }
-        parserIds.put(name, id);
+        
+        parser.setName(name);
+        parserByBasename.put(name, parser);
         parsers.add(parser);
     }
     
