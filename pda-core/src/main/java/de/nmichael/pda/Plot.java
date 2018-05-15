@@ -14,6 +14,7 @@ import de.nmichael.pda.data.DataSeries;
 import de.nmichael.pda.data.DataSeriesProperties;
 import de.nmichael.pda.data.Parser;
 import de.nmichael.pda.data.Project;
+import de.nmichael.pda.data.ProjectFile;
 import de.nmichael.pda.data.ProjectItem;
 import de.nmichael.pda.gui.GraphPanel;
 import de.nmichael.pda.util.Util;
@@ -26,6 +27,7 @@ public class Plot {
         Main.isGUI = false;
         Project prj = new Project();
         ProjectItem item = new ProjectItem(ProjectItem.Type.graph);
+        prj.addProjectItem(item);
         String pngname = null;
         int width = Project.PNG_WIDTH;
         int height = Project.PNG_HEIGHT;
@@ -45,6 +47,11 @@ public class Plot {
             if (mode == 0) {
                 if (pngname == null) {
                     pngname = args[i];
+                    String prjname = pngname;
+                    if (prjname.endsWith(".png")) {
+                        prjname = prjname.substring(0, prjname.length() - 3) + "pda";
+                    }
+                    prj.setFileName(prjname);
                 } else {
                     int pos = args[i].toLowerCase().indexOf("x");
                     if (pos > 0 && pos<args[i].length()-1) {
@@ -144,6 +151,8 @@ public class Plot {
                 graph.doLayout();
                 Logger.log(Logger.LogType.info, "Writing image " + pngname + " [" + width + "x" + height + "] ...");
                 graph.saveImageToFile(pngname);
+                ProjectFile pf = new ProjectFile(prj);
+                pf.saveToFile();
             } catch (Exception e) {
                 Logger.log(Logger.LogType.error, "Failed to parse or plot data: " + e);
                 e.printStackTrace();
@@ -151,6 +160,8 @@ public class Plot {
             }
         } else {
             Logger.log(Logger.LogType.error, "No series found.");
+            ProjectFile pf = new ProjectFile(prj);
+            pf.saveToFile();
             return 1;
         }
         return 0;
