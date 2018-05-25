@@ -34,6 +34,7 @@ public class Iostat extends Parser {
     
     private static final String CATEGORY_TOTAL = "all";
     private static final String CATEGORY_DISK  = "disk";
+    private static final String CATEGORY_CPU  = "cpu";
 
     private static final String PARAM_ALLOW_DUPLICATE_DISKS = "Allow duplicate (identical) Disk Names";
 
@@ -42,6 +43,7 @@ public class Iostat extends Parser {
     private Pattern p3 = Pattern.compile("([^ ]+) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) +([0-9]+\\.?[0-9]*) *"); // -x (device first, wsvc_t and asvc_t merged into svc_t)
     private Pattern pL = Pattern.compile("([^ ]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+)");
     private Pattern pL2 = Pattern.compile("([^ ]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\.]+) +([0-9\\\\.]+) +([0-9\\\\.]+)");
+    private Pattern pLcpu = Pattern.compile(" +([0-9\\.]+)  +([0-9\\\\.]+) +([0-9\\\\.]+) +([0-9\\\\.]+) +([0-9\\\\.]+) +([0-9\\\\.]+)");
     private boolean p23_deviceLast = true;
     private boolean isLinux = false;
     
@@ -53,7 +55,7 @@ public class Iostat extends Parser {
     public Iostat() {
         super("iostat");
         getCurrentTimeStamp().addTimeStampPattern("UNIXMILLISECONDS", 
-                                                  Pattern.compile("([0-9]+)"), 
+                                                  Pattern.compile("(\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d+)"), 
                                                   new TimeStamp.Fields[] { TimeStamp.Fields.unixms });
         setSupportedFileFormat(new FileFormatDescription(
                 FileFormatDescription.PRODUCT_SOLARIS + " / " + FileFormatDescription.PRODUCT_LINUX, 
@@ -103,6 +105,7 @@ public class Iostat extends Parser {
     @Override
     public void createAllSeries() {
         createSeries(CATEGORY_TOTAL ,"");
+        boolean foundCpu = false;
         try {
             String s;
             int cnt = 0;
@@ -137,6 +140,16 @@ public class Iostat extends Parser {
                             createSeries(CATEGORY_DISK, m.group(1));
                         }
                     }
+                }
+                m = pLcpu.matcher(s);
+                if (m.matches()) {
+                    if (!foundCpu) {
+                        series().addSeries(CATEGORY_CPU, "", "usr");
+                        series().addSeries(CATEGORY_CPU, "", "sys");
+                        series().addSeries(CATEGORY_CPU, "", "idl");
+                        series().addSeries(CATEGORY_CPU, "", "cpu");
+                    }
+                    foundCpu = true;
                 }
                 
                 if (cnt++ == 1000) {
@@ -266,6 +279,14 @@ public class Iostat extends Parser {
                                 allcnt++;
                             }
                         }
+                        m = pLcpu.matcher(s);
+                        if (m.matches()) {
+                            t = getCurrentTimeStamp().getTimeStamp();
+                            series().addSampleIfNeeded(CATEGORY_CPU, "", "usr", t, Float.parseFloat(m.group(1)));
+                            series().addSampleIfNeeded(CATEGORY_CPU, "", "sys", t, Float.parseFloat(m.group(3)));
+                            series().addSampleIfNeeded(CATEGORY_CPU, "", "idl", t, Float.parseFloat(m.group(6)));
+                            series().addSampleIfNeeded(CATEGORY_CPU, "", "cpu", t, 100 - Float.parseFloat(m.group(6)));
+                        }
                     }
                 }
             }
@@ -276,6 +297,7 @@ public class Iostat extends Parser {
             series().setPreferredScaleSeries(IO_PCTW, 0, 100);
             series().setPreferredScaleSeries(IO_PCTB, 0, 100);
             series().setPreferredScaleSame(new String[] { IO_KBPR, IO_KBPW });
+            series().setPreferredScaleCategory(CATEGORY_CPU, 0, 100);
        } catch(Exception e) {
             logError(e.toString());
         }
