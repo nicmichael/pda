@@ -114,7 +114,7 @@ public class HotSpot extends Parser {
     private static String g1_pause_Termination = "[Termination (ms):";
     private static String g1_pause_GcWorkerTime = "[GC Worker Total (ms):";
     private static String g1_pause_GcWorkerOther = "[GC Worker Other (ms):";
-    private static Pattern g1_pause_heap = Pattern.compile(".*\\[Eden: ([0-9\\.]+[MK])\\(([0-9\\.]+[MK])\\)->0\\.?0?B\\(([0-9\\.]+[MK])\\) Survivors: ([0-9\\.]+[MK])->([0-9\\.]+[MK]) Heap: ([0-9\\.]+[MK])\\(([0-9\\.]+[MK])\\)->([0-9\\.]+[MK])\\(([0-9\\.]+[MK])\\)\\].*");
+    private static Pattern g1_pause_heap = Pattern.compile(".*\\[Eden: ([0-9\\.]+[KMG])\\(([0-9\\.]+[KMG])\\)->0\\.?0?B\\(([0-9\\.]+[KMG])\\) Survivors: ([0-9\\.]+[KMG])->([0-9\\.]+[KMG]) Heap: ([0-9\\.]+[KMG])\\(([0-9\\.]+[KMG])\\)->([0-9\\.]+[KMG])\\(([0-9\\.]+[KMG])\\)\\].*");
     private static Pattern g1_full_gc = Pattern.compile(".*: \\[Full GC ([0-9]+)K->([0-9]+)K\\(([0-9]+)K\\), ([0-9]+.[0-9]+) secs\\].*");
     private static Pattern g1_concurrent_mark = Pattern.compile(".*: \\[GC concurrent-mark-end, ([0-9]+.[0-9]+) sec\\].*");
     private static Pattern g1_remark = Pattern.compile(".*: \\[GC remark, ([0-9]+.[0-9]+) secs\\].*");
@@ -325,24 +325,11 @@ public class HotSpot extends Parser {
         series().setPreferredScaleMaxSame(true, true, false);
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     public void parseOld() {
         try {
             starttime = getCurrentTimeStamp().getTimeStamp();
             
-            String str;
+            String str, laststr = null;
             long cms_start_time = 0;
             long cms_concurrent_start_time = 0;
             long t = 0;
@@ -350,6 +337,16 @@ public class HotSpot extends Parser {
             float cms_stw_total = 0.0f;
             float cms_concurrent_total = 0.0f;
             while( (str = readLine()) != null) {
+
+                // strip input of survivor space distribution
+                if (str.startsWith("Desired survivor size")) {
+                    while ((str = readLine()) != null && !str.startsWith(","));
+                    if (str != null && str.startsWith(",")) {
+                        str = laststr + str;
+                    }
+                }
+                laststr = str;
+
                 Matcher m = timepat.matcher(str);
                 if (m.matches()) {
                     getCurrentTimeStamp().set(Long.parseLong(m.group(1))*1000 + Long.parseLong(m.group(2)) + starttime);
