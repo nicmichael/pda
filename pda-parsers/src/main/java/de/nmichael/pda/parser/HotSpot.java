@@ -221,7 +221,7 @@ public class HotSpot extends Parser {
             }
             freset();
         } catch(Exception e) {
-            e.printStackTrace();
+            logError(e.toString(), e);
         }
         
         if (isUnifiedLogging) {
@@ -340,9 +340,22 @@ public class HotSpot extends Parser {
 
                 // strip input of survivor space distribution
                 if (str.startsWith("Desired survivor size")) {
-                    while ((str = readLine()) != null && !str.startsWith(","));
-                    if (str != null && str.startsWith(",")) {
+                    Pattern pend = Pattern.compile(".*(, [0-9\\.]+ secs\\])");
+                    while ((str = readLine()) != null) {
+                        if (str.startsWith(",")) {
+                            break;
+                        }
+                        Matcher mend = pend.matcher(str);
+                        if (mend.matches()) {
+                            str = mend.group(1);
+                            break;
+                        }
+                    }
+                    if (str != null) {
                         str = laststr + str;
+                    }
+                    if (str == null) {
+                        continue;
                     }
                 }
                 laststr = str;
@@ -748,7 +761,7 @@ public class HotSpot extends Parser {
                        S_TIME_STOPPED, S_TIME_CONCURRENT });
             
         } catch(Exception e) {
-            logError(e.toString());
+            logError(e.toString(), e);
         }
     }
     
