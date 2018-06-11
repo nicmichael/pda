@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.nmichael.pda.Logger;
 import de.nmichael.pda.util.ColorSelector;
 
 public class DataSeries implements Comparable {
@@ -34,6 +35,8 @@ public class DataSeries implements Comparable {
     private Sample minSample;
     private Sample maxSample;
     private Sample lastSample;
+    private double lastValue = - Double.MAX_VALUE; // yeah, believe it or not, but Double.MIN_VALUE is positive (4.9E-324)!
+    private boolean allSamplesMonotonic = true;
     private boolean ignoreFirst = false;
     private boolean cumulative = false;
     private boolean rate = false;
@@ -152,14 +155,18 @@ public class DataSeries implements Comparable {
     }
     
     public boolean isMonotonic() {
-        double v = Double.MIN_VALUE;
+        return allSamplesMonotonic;
+        /*
+        double v = - Double.MAX_VALUE; // yeah, believe it or not, but Double.MIN_VALUE is positive (4.9E-324)! 
         for (Sample sample : samples) {
+            Logger.debug("" + sample.getValue());
             if (sample.getValue() < v) {
                 return false;
             }
             v = sample.getValue();
         }
         return true;
+        */
     }
     
     public void convertToMonotonic(boolean ratePerSecond) {
@@ -189,6 +196,7 @@ public class DataSeries implements Comparable {
             prev = cur;
         }
         samples = monotonic;
+        allSamplesMonotonic = false;
     }
 
     /**
@@ -236,15 +244,13 @@ public class DataSeries implements Comparable {
             lastSample = sample;
         }
         if (mySample != null) {
-            samples.add(mySample);
-            updateMinMax(mySample);
+            addSampleInternal(mySample);
         }
     }
 
     public void addSample(long ts, double value) {
         Sample sample = new Sample(ts, value);
-        samples.add(sample);
-        updateMinMax(sample);
+        addSampleInternal(sample);
     }
     
     public boolean addSampleIfNeeded(long ts, double value) {
@@ -261,8 +267,16 @@ public class DataSeries implements Comparable {
     
     public void addSample(long ts, double value, String label) {
         SampleWithLabel sample = new SampleWithLabel(ts, value, label);
-        samples.add(sample);
-        updateMinMax(sample);
+        addSampleInternal(sample);
+    }
+    
+    private void addSampleInternal(Sample s) {
+        samples.add(s);
+        updateMinMax(s);
+        if (s.getValue() < lastValue) {
+            allSamplesMonotonic = false;
+        }
+        lastValue = s.getValue();
     }
     
     public boolean addSampleIfNeeded(long ts, double value, String label) {
