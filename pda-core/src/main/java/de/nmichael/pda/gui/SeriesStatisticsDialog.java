@@ -67,8 +67,8 @@ public class SeriesStatisticsDialog extends BaseDialog {
     @Override
     protected void initialize() {
         mainPanel.setLayout(new BorderLayout());
-        mainScrollPane.setMinimumSize(new Dimension(800,500));
-        mainScrollPane.setPreferredSize(new Dimension(800,500));
+        mainScrollPane.setMinimumSize(new Dimension(1200,700));
+        mainScrollPane.setPreferredSize(new Dimension(1200,700));
         mainPanel.add(mainScrollPane,BorderLayout.CENTER);
         mainTextArea.setFont(new java.awt.Font("Courier", 1, 14));
         mainScrollPane.getViewport().add(mainTextArea,null);

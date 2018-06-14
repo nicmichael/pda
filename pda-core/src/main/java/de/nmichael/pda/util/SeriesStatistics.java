@@ -88,7 +88,7 @@ public class SeriesStatistics {
         StatisticsData stat = (series != null ? series.getStatisticsData(xFrom, xTo, prop.getSmooth()) : null);
         
         if (stat != null && stat.samplesCnt > 0) {
-            addLine(String.format("%-30s: %s", prop.getDisplayName(), Util.double2string(stat.valuesSum/stat.samplesCnt, 16, 3, false)));
+            addLine(String.format("%-80s: %s", prop.getDisplayName(), Util.double2string(stat.valuesSum/stat.samplesCnt, 19, 3, false)));
         }
     }
 
@@ -116,18 +116,19 @@ public class SeriesStatistics {
             addLine("");
             addLine("Values");
             addLine("----------------------------------------------------------------");
-            addLine("Min Value         : "+ Util.double2string(stat.valuesMin, 16, 3, false));
-            addLine("Avg Value         : "+ Util.double2string(stat.valuesSum/stat.samplesCnt, 16, 3, false));
-            addLine("Max Value         : "+ Util.double2string(stat.valuesMax, 16, 3, false));
-            addLine("Variance          : "+ Util.double2string(stat.getVariance(), 16, 3, false));
-            addLine("Standard Deviation: "+ Util.double2string(stat.getStdDeviation(), 16, 3, false));
+            addLine("Min Value         : "+ Util.double2string(stat.valuesMin, 19, 3, false));
+            addLine("Avg Value         : "+ Util.double2string(stat.valuesSum/stat.samplesCnt, 19, 3, false));
+            addLine("Max Value         : "+ Util.double2string(stat.valuesMax, 19, 3, false));
+            addLine("Sum of Values     : "+ Util.double2string(stat.valuesSum, 19, 3, false));
+            addLine("Variance          : "+ Util.double2string(stat.getVariance(), 19, 3, false));
+            addLine("Standard Deviation: "+ Util.double2string(stat.getStdDeviation(), 19, 3, false));
             addLine("");
             if (stat.samplesCnt >= 2) {
                 addLine("Distance between samples");
                 addLine("----------------------------------------------------------------");
-                addLine("Min Distance      : "+ Util.double2string((((double)stat.distanceMin)/1000), 12, 3, false)+ " sec");
-                addLine("Avg Distance      : "+ Util.double2string((((double)((stat.lastSample-stat.firstSample)/(stat.samplesCnt-1)))/1000), 12, 3, false)+ " sec");
-                addLine("Max Distance      : "+ Util.double2string((((double)stat.distanceMax)/1000), 12, 3, false)+ " sec");
+                addLine("Min Distance      : "+ Util.double2string((((double)stat.distanceMin)/1000), 15, 3, false)+ " sec");
+                addLine("Avg Distance      : "+ Util.double2string((((double)((stat.lastSample-stat.firstSample)/(stat.samplesCnt-1)))/1000), 15, 3, false)+ " sec");
+                addLine("Max Distance      : "+ Util.double2string((((double)stat.distanceMax)/1000), 15, 3, false)+ " sec");
             }
         } else {
             addLine("No samples found in selected interval.");
