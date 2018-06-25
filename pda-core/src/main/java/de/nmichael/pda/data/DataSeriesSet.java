@@ -27,8 +27,10 @@ public class DataSeriesSet {
     private DataSeriesPropertySet propertySet;
     private Hashtable<String, Hashtable<String, Hashtable<String, DataSeries>>> allseries =
             new Hashtable<String, Hashtable<String, Hashtable<String, DataSeries>>>();
+    private ArrayList<DataSeries> allSeriesCache;
     private Hashtable<String, DataSeriesProperties> savedSelectedSeries;
     private ArrayList<String> savedUsedSeries;
+    private int[] seriesTimestampIdx;
 
     /**
      * Constructs a new set of series for a parser
@@ -65,6 +67,7 @@ public class DataSeriesSet {
         allser.put(series, ser);
         allsub.put(subcategory, allser);
         allseries.put(category, allsub);
+        allSeriesCache = null;
         return ser;
     }
 
@@ -137,6 +140,7 @@ public class DataSeriesSet {
     public void clearAll() {
         allseries =
                 new Hashtable<String, Hashtable<String, Hashtable<String, DataSeries>>>();
+        allSeriesCache = null;
     }
 
     /**
@@ -355,18 +359,21 @@ public class DataSeriesSet {
      * @return an arraylist of all series
      */
     public ArrayList<DataSeries> getAllSeries() {
-        ArrayList<DataSeries> all = new ArrayList<DataSeries>();
+        if (allSeriesCache != null) {
+            return allSeriesCache;
+        }
+        allSeriesCache = new ArrayList<DataSeries>();
         String[] cats = getCategoryNames();
         for (String cat : cats) {
             String[] subcats = getSubcategoryNames(cat);
             for (String subcat : subcats) {
                 String[] sers = getSeriesNames(cat, subcat);
                 for (String ser : sers) {
-                    all.add(getSeries(cat, subcat, ser));
+                    allSeriesCache.add(getSeries(cat, subcat, ser));
                 }
             }
         }
-        return all;
+        return allSeriesCache;
     }
 
     /**
@@ -758,6 +765,73 @@ public class DataSeriesSet {
             }
         }
         return (ts != 0 ? ts : Long.MAX_VALUE);
+    }
+    
+    /**
+     * Returns the next timestamp of any series in this set.
+     * @param onlySelectedSeries if true, only consider selected series
+     * @param currentTs the current (last) timestamp
+     * @param tolerance the timestamp tolerance in ms
+     * @return the last timestamp
+     */
+    public long getNextTimestamp(boolean onlySelectedSeries, long currentTs,  long tolerance) {
+        ArrayList<DataSeries> allSeries = getAllSeries();
+        if (allSeries == null || allSeries.size() < 1) {
+            return 0;
+        }
+        if (seriesTimestampIdx == null) {
+            seriesTimestampIdx = new int[allSeries.size()];
+        }
+        currentTs += tolerance - 1;
+        long nextTs = Long.MAX_VALUE;
+        for (int i=0; i<allSeries.size(); i++) {
+            DataSeries series = allSeries.get(i);
+            if (onlySelectedSeries && !series.isSelected()) {
+                continue;
+            }
+            long ts = Long.MAX_VALUE;
+            while (seriesTimestampIdx[i] < series.getNumberOfSamples() &&
+                   (ts = series.getSample(seriesTimestampIdx[i]).getTimeStamp()) <= currentTs) {
+                seriesTimestampIdx[i]++;
+            }
+            if (seriesTimestampIdx[i] < series.getNumberOfSamples()) {
+                if (ts < nextTs) {
+                    nextTs = ts;
+                }
+            }
+        }
+        return nextTs;
+    }
+    
+    /**
+     * Returns an array of samples that match the requesting timestamp within the given tolerance.
+     * This method may only be called after invoking getNextTimestamp(), and must pass in the timestamp
+     * obtained from getNextTimestamp
+     * @param onlySelectedSeries if true, only consider selected series
+     * @param ts the timestamp returned from getNextTimestamp()
+     * @param tolerance the timestamp tolerance in ms
+     * @return an array of samples, where individual elements may be null if no sample of that series matches
+     */
+    public Sample[] getSamplesAtTimestamp(boolean onlySelectedSeries, long ts, long tolerance) {
+        ArrayList<DataSeries> allSeries = getAllSeries();
+        if (allSeries == null || seriesTimestampIdx == null || allSeries.size() < 1 ||
+                allSeries.size() != seriesTimestampIdx.length) {
+            return null;
+        }
+        int cnt = onlySelectedSeries ? getSelectedSeries().size() : allSeries.size();
+        Sample[] nextSamples = new Sample[cnt];
+        for (int i=0, j=0; i<nextSamples.length; j++) {
+            DataSeries series = allSeries.get(j);
+            if (onlySelectedSeries && !series.isSelected()) {
+                continue;
+            }
+            Sample s = seriesTimestampIdx[j] < series.getNumberOfSamples() ? series.getSample(seriesTimestampIdx[j]) : null;
+            if (s != null && (s.getTimeStamp() < ts || s.getTimeStamp() > ts + tolerance)) {
+                s = null;
+            }
+            nextSamples[i++] = s;
+        }
+        return nextSamples;
     }
     
     /**

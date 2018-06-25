@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class Main {
     
-    public static final String VERSIONID = "2.1.0_04";
+    public static final String VERSIONID = "2.1.0_05";
     
     public static final String PROGRAM = "Performance Data Analyzer";
     public static final String PROGRAMSHORT = "PDA";
@@ -61,12 +61,12 @@ public class Main {
         System.out.println("Usage:");
         System.out.println("");
         System.out.println("  Interactive GUI");
-        System.out.println("    PDA [-v] [file]");
+        System.out.println("    PDA [-v] [-Dprop=value] [file]");
         System.out.println("        -v        verbose");
         System.out.println("        file      project file to open");
         System.out.println("");
         System.out.println("  Graph Plotting");
-        System.out.println("    PDA [-v] -p pngfile [dim] -f files... -s series...");
+        System.out.println("    PDA [-v] [-Dprop=value] -p pngfile [dim] -f files... -s series...");
         System.out.println("        -v        verbose");
         System.out.println("        pngfile   filename of image to plot");
         System.out.println("        dim       dimension of image (default: 1024x768)");
@@ -74,15 +74,20 @@ public class Main {
         System.out.println("        series... series to plot (regular expressions matching series names)");
         System.out.println("");
         System.out.println("  Reporting");
-        System.out.println("    PDA [-v] -r -f files... -s series...");
+        System.out.println("    PDA [-v] [-Dprop=value] -r -f files... -s series...");
         System.out.println("        -v        verbose");
         System.out.println("        files...  files to plot (use 'file@parser' to specify parser class to use)");
         System.out.println("        series... series to plot (regular expressions matching series names)");
         System.out.println("");
         System.out.println("  File Conversion");
-        System.out.println("    PDA [-v] -c converterclass -f files...");
+        System.out.println("    PDA [-v] [-Dprop=value] -c converterclass -f files...");
         System.out.println("        -v        verbose");
         System.out.println("        files...  files to convert (use 'file@parser' to specify parser class to use)");
+        System.out.println("");
+        System.out.println("  CSV Merge");
+        System.out.println("    PDA [-v] [-Dprop=value] -m files...");
+        System.out.println("        -v        verbose");
+        System.out.println("        files...  CSV files to merge");
     }
     
     private static void getCommandLineArgs(String[] args) {
@@ -95,6 +100,16 @@ public class Main {
                 showHelp();
                 System.exit(1);
             }
+            if (args[i].startsWith("-D") && args[i].indexOf("=") > 2) {
+                String[] kv = args[i].substring(2).split("=");
+                if (kv != null && kv.length == 2) {
+                    System.setProperty(kv[0], kv[1]);
+                } else {
+                    showHelp();
+                    System.exit(1);
+                }
+                continue;
+            }
             if (args[i].equals("-p")) {
                 System.exit(Plot.plotFiles(args, i+1));
             }
@@ -103,6 +118,9 @@ public class Main {
             }
             if (args[i].equals("-c")) {
                 System.exit(Convert.convertFiles(args, i+1));
+            }
+            if (args[i].equals("-m")) {
+                System.exit(CsvMerger.merge(args, i+1));
             }
             if (i == args.length-1) {
                 argFname = args[i];
