@@ -16,6 +16,7 @@ import de.nmichael.pda.data.Parser;
 import de.nmichael.pda.data.Project;
 import de.nmichael.pda.data.ProjectFile;
 import de.nmichael.pda.data.ProjectItem;
+import de.nmichael.pda.data.TimeStamp;
 import de.nmichael.pda.gui.GraphPanel;
 import de.nmichael.pda.util.Util;
 import java.io.File;
@@ -31,20 +32,31 @@ public class Plot {
         String pngname = null;
         int width = Project.PNG_WIDTH;
         int height = Project.PNG_HEIGHT;
-        int mode = 0; // 1 - files; 2 - series
+        long start = 0;
+        long stop = Long.MAX_VALUE;
+        final int ARG_PNG = 0;
+        final int ARG_FILES = 1;
+        final int ARG_SERIES = 2;
+        final int ARG_START = 3;
+        final int ARG_STOP = 4;
+        int argType = 0;
         int seriesCount = 0;
         for (; i<args.length; i++) {
             if (args[i].startsWith("-")) {
                 if (args[i].equals("-f")) {
-                    mode = 1;
+                    argType = ARG_FILES;
                 } else if (args[i].equals("-s")) {
-                    mode = 2;
+                    argType = ARG_SERIES;
+                } else if (args[i].equalsIgnoreCase("-x")) {
+                    argType = ARG_START;
+                } else if (args[i].equalsIgnoreCase("-y")) {
+                    argType = ARG_STOP;
                 } else {
-                    mode = 0;
+                    argType = ARG_PNG;
                 }
                 continue;
             }
-            if (mode == 0) {
+            if (argType == ARG_PNG) {
                 if (pngname == null) {
                     pngname = args[i];
                     String prjname = pngname;
@@ -60,7 +72,7 @@ public class Plot {
                     }
                 }
             }
-            if (mode == 1) { // files
+            if (argType == ARG_FILES) { // files
                 String fname = args[i];
                 String pname = null;
                 if (fname.indexOf("@") > 0) {
@@ -101,7 +113,7 @@ public class Plot {
                     Logger.log(Logger.LogType.error, "Could not instantiate parser '" + pname +"' for file: " + fname + ": " + e.toString());
                 }
             }
-            if (mode == 2) { // series
+            if (argType == ARG_SERIES) { // series
                 String pat = args[i];
                 if (!pat.startsWith("^")) {
                     pat = ".*" + pat;
@@ -129,6 +141,18 @@ public class Plot {
                     }
                 }
             }
+            if (argType == ARG_START) {
+                TimeStamp tstart = new TimeStamp(0, 0, 0);
+                tstart.getTimeStampFromLine(args[i], null, 0, false);
+                start = tstart.getTimeStamp();
+                Logger.log(Logger.LogType.info, "Start Time: " + Util.getTimeString(start) + " (" + args[i] + ")");
+            }
+            if (argType == ARG_STOP) {
+                TimeStamp tstop = new TimeStamp(0, 0, 0);
+                tstop.getTimeStampFromLine(args[i], null, 0, false);
+                stop = tstop.getTimeStamp();
+                Logger.log(Logger.LogType.info, "Stop Time: " + Util.getTimeString(stop) + " (" + args[i] + ")");
+            }
         }
         
         if (item.getParsers().size() == 0) {
@@ -146,6 +170,12 @@ public class Plot {
 
                 Logger.log(Logger.LogType.info, "Plotting " + seriesCount + " series ...");
                 item.setPngFilename(pngname);
+                if (start > 0) {
+                    item.setScaleMinX(start);
+                }
+                if (stop < Long.MAX_VALUE) {
+                    item.setScaleMaxX(stop);
+                }
                 GraphPanel graph = new GraphPanel(null, item, width, height);
                 graph.updateGraphPanel();
                 graph.doLayout();

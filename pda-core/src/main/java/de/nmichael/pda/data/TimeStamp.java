@@ -61,20 +61,20 @@ public class TimeStamp {
 
     private synchronized void initializePatterns() {
         // typical YYYY-MM-DD hh:mm:ss timestamp
-        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
-                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
+        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[-_ T]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
+                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\-_T ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
                 new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second,
                         Fields.ampm });
 
         // typical MM.DD.YYYY hh:mm:ss timestamp
-        addTimeStampPattern("MM[.-/]DD[.-/]YYYY[- ]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
-                ".*(\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d\\d\\d)[\\- ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
+        addTimeStampPattern("MM[.-/]DD[.-/]YYYY[-_ ]hh[:-.]mm[:-.]ss (AP)", Pattern.compile(
+                ".*(\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d\\d\\d)[\\-_T ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d) ?([AP]?M?).*"),
                 new Fields[] { Fields.month, Fields.day, Fields.year, Fields.hour, Fields.minute, Fields.second,
                         Fields.ampm });
 
         // typical YYYY-MM-DD hh:mm:ss.mss timestamp
-        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[- T]hh[:-.]mm[:-.]ss[:-.,]mss", Pattern.compile(
-                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\- T](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.,](\\d\\d\\d).*"),
+        addTimeStampPattern("YYYY[.-/]MM[.-/]DD[-_ T]hh[:-.]mm[:-.]ss[:-.,]mss", Pattern.compile(
+                ".*(\\d\\d\\d\\d)[\\.\\-/](\\d\\d)[\\.\\-/](\\d\\d)[\\-_T ](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.](\\d\\d)[:\\-\\.,](\\d\\d\\d).*"),
                 new Fields[] { Fields.year, Fields.month, Fields.day, Fields.hour, Fields.minute, Fields.second,
                         Fields.ms });
 

@@ -17,16 +17,6 @@ public class CsvConverter implements Converter {
     private static String SEP = ";";
     private static long TOLERANCE = 1000;
     
-    public CsvConverter() {
-        if (System.getProperty("csv.sep") != null && System.getProperty("csv.sep").length() > 0) {
-            SEP = System.getProperty("csv.sep");
-        }
-        if (System.getProperty("csv.tolerance") != null && System.getProperty("csv.tolerance").length() > 0) {
-            TOLERANCE = Util.string2long(System.getProperty("csv.tolerance"), TOLERANCE);
-        }
-        Logger.info("CsvConverter using separator '" + SEP + "' (-Dcsv.sep) and sampling interval tolerance " + TOLERANCE + "ms (-Dcsv.tolerance)");
-    }
-    
     private void writeHeader(BufferedWriter f, ArrayList<DataSeries> series) throws IOException {
         StringBuilder s = new StringBuilder();
         s.append("Timestamp");
@@ -50,6 +40,14 @@ public class CsvConverter implements Converter {
     
     @Override
     public boolean convert(String filename, String parser, DataSeriesSet series) {
+        if (System.getProperty("csv.sep") != null && System.getProperty("csv.sep").length() > 0) {
+            SEP = System.getProperty("csv.sep");
+        }
+        if (System.getProperty("csv.tolerance") != null && System.getProperty("csv.tolerance").length() > 0) {
+            TOLERANCE = Util.string2long(System.getProperty("csv.tolerance"), TOLERANCE);
+        }
+        Logger.info("CsvConverter using separator '" + SEP + "' (-Dcsv.sep) and sampling interval tolerance " + TOLERANCE + "ms (-Dcsv.tolerance)");
+
         String csvFile = filename + ".csv";
         Logger.info("Creating " + csvFile + " with " + series.size() + " series ...");
         try {
