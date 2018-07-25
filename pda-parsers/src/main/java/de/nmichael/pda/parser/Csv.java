@@ -68,6 +68,9 @@ public class Csv extends Parser {
         
         series = new ArrayList<DataSeries>();
         String s = readLine();
+        while (s != null && s.trim().length() == 0) {
+            s = readLine();
+        }
         if (s != null) {
             s = s.trim();
             myDelimiter = getDelimiter(s, new String[] { delimiter, ";", ",", "|" });
@@ -111,13 +114,12 @@ public class Csv extends Parser {
             while ((s = readLineNoTime()) != null) {
                 s = s.trim();
                 if (s.length() > 0) {
-                    StringTokenizer tok = new StringTokenizer(s, myDelimiter);
-                    if (tok.hasMoreTokens()) {
-                        getCurrentTimeStamp().getTimeStampFromLine(tok.nextToken(), null, 1, true);
+                    String[] fields = s.split(myDelimiter, -1);
+                    if (fields.length > 0) {
+                        getCurrentTimeStamp().getTimeStampFromLine(fields[0], null, 1, true);
                         long t = getCurrentTimeStamp().getTimeStamp();
-                        int i = 0;
-                        while (tok.hasMoreTokens()) {
-                            String val = tok.nextToken();
+                        for (int i=0; i<fields.length - 1; i++) {
+                            String val = fields[i + 1];
                             if (val.length() > 0) {
                                 try {
                                     DataSeries ser = (i < series.size() ? series.get(i) : null);
@@ -128,7 +130,6 @@ public class Csv extends Parser {
                                     // nothing to do (ignore this sample!
                                 }
                             }
-                            i++;
                         }
                     }
                 }
