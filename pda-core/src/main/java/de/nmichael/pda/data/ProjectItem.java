@@ -216,7 +216,16 @@ public class ProjectItem {
         Arrays.sort(arr);
         return arr;
     }
-    
+
+    public DataSeriesSet getDataSeriesSet(boolean onlySelected) {
+        DataSeriesSet set = new DataSeriesSet(null);
+        ParserSet pset = getParsers();
+        for (int i=0; i<pset.size(); i++) {
+            set.add(pset.getParser(i).series());
+        }
+        return set;
+    }
+
     public String[] getAllSeriesNames(boolean withGroups) {
         DataSeries[] series = getAllSeries(withGroups);
         String[] names = new String[ (series != null ? series.length : 0) ];

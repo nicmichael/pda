@@ -48,7 +48,7 @@ public class DataSeries implements Comparable {
 
     public DataSeries(Parser parser, String category, String subcategory, String series) {
         this.parser = parser;
-        this.parserName = parser.getName();
+        this.parserName = parser != null ? parser.getName() : "";
         this.categoryName = category;
         this.subcategoryName = subcategory;
         this.seriesName = series;
@@ -388,6 +388,18 @@ public class DataSeries implements Comparable {
         } else {
             return 0;
         }
+    }
+
+    public double computeAvgValue() {
+        double sum = 0;
+        int cnt = 0;
+        for (Sample s : samples) {
+            if (!Double.isNaN(s.getValue())) {
+                sum += s.getValue();
+                cnt++;
+            }
+        }
+        return (cnt > 0 ? sum / (double)cnt : 0);
     }
 
     public double getPreferredScaleMinValue() {

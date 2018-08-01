@@ -30,7 +30,7 @@ public class CsvConverter implements Converter {
     private void writeData(BufferedWriter f, DataSeriesSet series, long ts) throws IOException {
         StringBuilder s = new StringBuilder();
         s.append(ts);
-        Sample[] samples = series.getSamplesAtTimestamp(false, ts, TOLERANCE);
+        Sample[] samples = series.getSamplesAtTimestamp(false, ts, TOLERANCE, false);
         for (Sample smp : samples) {
             s.append(SEP + (smp != null ? Double.toString(smp.getValue()) : ""));
         }

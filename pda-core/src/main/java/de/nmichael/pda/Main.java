@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class Main {
     
-    public static final String VERSIONID = "2.1.0_05";
+    public static final String VERSIONID = "2.1.1_00";
     
     public static final String PROGRAM = "Performance Data Analyzer";
     public static final String PROGRAMSHORT = "PDA";
@@ -51,7 +51,7 @@ public class Main {
     }
     
     
-    private static void showHelp() {
+    public static void showHelp() {
         System.out.println(PROGRAM);
         System.out.println(VERSION);
         System.out.println("");
@@ -66,25 +66,38 @@ public class Main {
         System.out.println("        file      project file to open");
         System.out.println("");
         System.out.println("  Graph Plotting");
-        System.out.println("    PDA [-v] [-Dprop=value] -p pngfile [dim] -f files... -s series... [-x start] [-y end]");
+        System.out.println("    PDA [-v] [-Dprop=value] -p -f files... -s series... [-x start] [-y end] [-o name] [-d dim]");
         System.out.println("        -v        verbose");
-        System.out.println("        pngfile   filename of image to plot");
-        System.out.println("        dim       dimension of image (default: 1024x768)");
         System.out.println("        files...  files to plot (use 'file@parser' to specify parser class to use)");
         System.out.println("        series... series to plot (regular expressions matching series names)");
         System.out.println("        start     start timestamp (YYYY-MM-DD_HH:MM:SS)");
         System.out.println("        end       end timestamp (YYYY-MM-DD_HH:MM:SS)");
+        System.out.println("        name      output file name");
+        System.out.println("        dim       dimension of image (default: 1024x768)");
         System.out.println("");
         System.out.println("  Reporting");
-        System.out.println("    PDA [-v] [-Dprop=value] -r -f files... -s series... [-x start] [-y end]");
+        System.out.println("    PDA [-v] [-Dprop=value] -r -f files... -s series... [-x start] [-y end] [-o name]");
         System.out.println("        -v        verbose");
         System.out.println("        files...  files to plot (use 'file@parser' to specify parser class to use)");
         System.out.println("        series... series to plot (regular expressions matching series names)");
         System.out.println("        start     start timestamp (YYYY-MM-DD_HH:MM:SS)");
         System.out.println("        end       end timestamp (YYYY-MM-DD_HH:MM:SS)");
+        System.out.println("        name      output file name");
+        System.out.println("");
+        System.out.println("  Correlation");
+        System.out.println("    PDA [-v] [-Dprop=value] -c -f files... -s series... [-x start] [-y end] [-z] [-i] [-t tolerance] [-o name]");
+        System.out.println("        -v        verbose");
+        System.out.println("        files...  files to analyze (use 'file@parser' to specify parser class to use)");
+        System.out.println("        series... series to correlate (regular expressions matching series names)");
+        System.out.println("        start     start timestamp (YYYY-MM-DD_HH:MM:SS)");
+        System.out.println("        end       end timestamp (YYYY-MM-DD_HH:MM:SS)");
+        System.out.println("        -z        eliminate rows with partially missing samples");
+        System.out.println("        -i        interpolate missing samples");
+        System.out.println("        tolerance tolerance (in ms) to merge samples at different data points");
+        System.out.println("        name      output file name");
         System.out.println("");
         System.out.println("  File Conversion");
-        System.out.println("    PDA [-v] [-Dprop=value] -c converterclass -f files...");
+        System.out.println("    PDA [-v] [-Dprop=value] -t converterclass -f files...");
         System.out.println("        -v        verbose");
         System.out.println("        files...  files to convert (use 'file@parser' to specify parser class to use)");
         System.out.println("");
@@ -114,19 +127,30 @@ public class Main {
                 }
                 continue;
             }
+            CLI cli = null;
             if (args[i].equals("-p")) {
-                System.exit(Plot.plotFiles(args, i+1));
+                cli = new Plot(args, i+1);
             }
             if (args[i].equals("-r")) {
-                System.exit(Reporter.report(args, i+1));
+                cli = new Reporter(args, i+1);
             }
             if (args[i].equals("-c")) {
+                cli = new Correlation(args, i+1);
+            }
+            if (cli != null) {
+                System.exit(cli.process() ? 0 : 1);
+            }
+            if (args[i].equals("-t")) {
                 System.exit(Convert.convertFiles(args, i+1));
             }
             if (args[i].equals("-m")) {
                 System.exit(CsvMerger.merge(args, i+1));
             }
-            if (i == args.length-1) {
+            if (i == args.length-1 || argFname != null) {
+                if (args[i].startsWith("-")) {
+                    showHelp();
+                    System.exit(1);
+                }
                 argFname = args[i];
             }
         }

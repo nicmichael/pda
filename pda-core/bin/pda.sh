@@ -4,10 +4,10 @@ SCRIPT=`basename $0`
 
 # PDA Installation Directory
 if [ "$PDA_HOME" = "" ] ; then
-  PWD=`pwd`
+  CWD=`pwd`
   cd `dirname $0`/..
   PDA_HOME=`pwd`
-  cd $PWD
+  cd $CWD
 fi
 
 # Other Directories
@@ -28,6 +28,7 @@ done
 PDA_CLASSPATH=$PDA_CLASSPATH
 
 # Logging Info
+echo "[$SCRIPT] CWD=`pwd`"
 echo "[$SCRIPT] PDA_HOME=$PDA_HOME"
 echo "[$SCRIPT] PDA_LIB=$PDA_LIB"
 echo "[$SCRIPT] PDA_HEAP=$PDA_HEAP"

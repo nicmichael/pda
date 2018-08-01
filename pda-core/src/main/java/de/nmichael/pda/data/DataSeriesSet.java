@@ -71,6 +71,29 @@ public class DataSeriesSet {
         return ser;
     }
 
+    public void add(DataSeriesSet set) {
+        for (DataSeries s : set.getAllSeries()) {
+            String category = s.getCategoryName();
+            String subcategory = s.getSubcategoryName();
+            String series = s.getSeriesName();
+            Hashtable<String, Hashtable<String, DataSeries>> allsub = allseries.get(category);
+            if (allsub == null) {
+                allsub = new Hashtable<String, Hashtable<String, DataSeries>>();
+            }
+            Hashtable<String, DataSeries> allser = allsub.get(subcategory);
+            if (allser == null) {
+                allser = new Hashtable<String, DataSeries>();
+            }
+            if (allser.get(series) != null) {
+                return; // duplicate series
+            }
+            allser.put(series, s);
+            allsub.put(subcategory, allser);
+            allseries.put(category, allsub);
+        }
+        allSeriesCache = null;
+    }
+
     /**
      * Gets or creates a series 
      * @param category the category name of the new series
@@ -810,9 +833,10 @@ public class DataSeriesSet {
      * @param onlySelectedSeries if true, only consider selected series
      * @param ts the timestamp returned from getNextTimestamp()
      * @param tolerance the timestamp tolerance in ms
+     * @param interpolate if true, interpolate missing samples
      * @return an array of samples, where individual elements may be null if no sample of that series matches
      */
-    public Sample[] getSamplesAtTimestamp(boolean onlySelectedSeries, long ts, long tolerance) {
+    public Sample[] getSamplesAtTimestamp(boolean onlySelectedSeries, long ts, long tolerance, boolean interpolate) {
         ArrayList<DataSeries> allSeries = getAllSeries();
         if (allSeries == null || seriesTimestampIdx == null || allSeries.size() < 1 ||
                 allSeries.size() != seriesTimestampIdx.length) {
@@ -827,7 +851,23 @@ public class DataSeriesSet {
             }
             Sample s = seriesTimestampIdx[j] < series.getNumberOfSamples() ? series.getSample(seriesTimestampIdx[j]) : null;
             if (s != null && (s.getTimeStamp() < ts || s.getTimeStamp() > ts + tolerance)) {
-                s = null;
+                if (interpolate) {
+                    Sample s2 = null;
+                    if (s.getTimeStamp() < ts) {
+                        if (seriesTimestampIdx[j] + 1 < series.getNumberOfSamples()) {
+                            s2 = series.getSample(seriesTimestampIdx[j] + 1);
+                        }
+                    } else {
+                        if (seriesTimestampIdx[j] > 0) {
+                            s2 = series.getSample(seriesTimestampIdx[j] - 1);
+                        }
+                    }
+                    if (s2 != null) {
+                        s = new Sample(ts, (s.getValue() + s2.getValue()) / 2.0);
+                    }
+                } else {
+                    s = null;
+                }
             }
             nextSamples[i++] = s;
         }
