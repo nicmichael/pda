@@ -36,6 +36,7 @@ public class DataSeries implements Comparable {
     private Sample maxSample;
     private Sample lastSample;
     private double lastValue = - Double.MAX_VALUE; // yeah, believe it or not, but Double.MIN_VALUE is positive (4.9E-324)!
+    private boolean convertedToMonotonic = false;
     private boolean allSamplesMonotonic = true;
     private boolean ignoreFirst = false;
     private boolean cumulative = false;
@@ -170,6 +171,9 @@ public class DataSeries implements Comparable {
     }
     
     public void convertToMonotonic(boolean ratePerSecond) {
+        if (convertedToMonotonic) {
+            return; // avoid duplicate conversion
+        }
         ArrayList<Sample> monotonic = new ArrayList<Sample>();
         if (samples.size() < 2) {
             return;
@@ -197,6 +201,7 @@ public class DataSeries implements Comparable {
         }
         samples = monotonic;
         allSamplesMonotonic = false;
+        convertedToMonotonic = true;
     }
 
     /**

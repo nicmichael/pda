@@ -223,6 +223,7 @@ public abstract class Parser {
             return false;
         }
         try {
+            logDebug(getName() + " parsing data ...");
             parse();
             for (DataSeries s : series().getAllSeries()) {
                 if ( (s.isUsed() && !s.isParsed()) || s.getNumberOfSamples() > 0 ) {
@@ -267,6 +268,7 @@ public abstract class Parser {
             return null;
         }
         try {
+            logDebug(getName() + " scanning data for series names ...");
             createAllSeries();
             seriesSet.restoreSelection();
             return seriesSet.getAllSeriesNames();

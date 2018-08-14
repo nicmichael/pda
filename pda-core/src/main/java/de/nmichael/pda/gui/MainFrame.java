@@ -581,7 +581,12 @@ public class MainFrame extends JFrame {
     private void seriesHighlight(DataSeriesProperties p, boolean highlight) {
         graphPanel.updateLayerHighlight(p, highlight);
         graphPanel.validate();
+        if (projectItem.isScaleXSet()) {
+            graphPanel.zoomAllGraphs(projectItem.getScaleMinX(), projectItem.getScaleMaxX());
+        }
+        validateFrame();
     }
+
 
     private void addSeriesButton(JPanel panel, final DataSeriesProperties dp, int i, int width) {
         JButton but = new JButton();

@@ -43,8 +43,10 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
     private ProjectItem projectItem;
     private float myWidth = 0;
     private float myHeight = 0;
+    private float xyRatio = 0;
     private Vector<Layer> layers;
     private Hashtable<String,Layer> series2layer;
+    private Hashtable<String,CartesianGraph> series2highlightedGraph = new Hashtable<String,CartesianGraph>();;
     private Vector labels;
     private double nextLabelPosition;
     private Hashtable graph2yUserRange;
@@ -119,6 +121,7 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
     }
     
     public void updateGraphPanel() {
+        xyRatio = 0; // recalculate
         layers = new Vector<Layer>();
         series2layer = new Hashtable<String,Layer>();
         graph2yUserRange = new Hashtable();
@@ -171,9 +174,11 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
     private Layer createLayer(DataSeriesProperties prop) {
         String name = prop.getDisplayName();
         
-        float xyRatio = ((float)getWidth())/((float)getHeight());
-        myWidth = G_WIDTH * xyRatio;
-        myHeight = G_HEIGHT;
+        if (xyRatio == 0) {
+            xyRatio = ((float)getWidth())/((float)getHeight());
+            myWidth = G_WIDTH * xyRatio;
+            myHeight = G_HEIGHT;
+        }
         final Layer layer = new Layer(name, new Dimension2D(myWidth, myHeight));
         double scaleMin = prop.getScaleMin();
         double scaleMax = prop.getScaleMax();
@@ -186,6 +191,7 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
                 scaleMin = -1 * maxMin2MaxRatio * scaleMax;
             }
         }
+        Logger.log(Logger.LogType.debug, "createLayer("+prop.getName()+"): xyRatio=" + xyRatio + ", myWidth=" + myWidth + ", myHeight=" + myHeight + ", scaleMin=" + scaleMin + ", scaleMax=" + scaleMax);
         CartesianGraph g = createGraph(layer, prop, name, scaleMin, scaleMax);
         if (g == null) {
             Logger.log(Logger.LogType.debug, "createLayer("+prop.getName()+") - skipped (no graph created)");
@@ -236,46 +242,63 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
     }
     
     public synchronized void updateLayerHighlight(DataSeriesProperties prop, boolean highlight) {
-        Layer l = (series2layer != null ? series2layer.get(prop.getName()) : null);
-        if (!prop.isVisible() && l == null) {
-            l = createLayer(prop);            
-        }
-        if (l != null) {
-            double scaleMin = prop.getScaleMin();
-            double scaleMax = prop.getScaleMax();
-            if (scaleMax <= scaleMin) {
-                scaleMax = scaleMin + 1;
-            }
-            if (highlight) {
-                prop = prop.clone();
-                prop.setLineStyle(DataSeriesProperties.LINESTYLE_STRONG);
-                prop.setLineWidth(5);
-            }
-            CartesianGraph g = createGraph(l, prop, prop.getDisplayName(), scaleMin, scaleMax);
-            if (g == null) {
-                Logger.log(Logger.LogType.debug, "updateLayer(" + prop.getName() + ") - skipped (no graph created)");
-                return;
-            }
-            l.setGraph(g);
-            try {
-                if (!prop.isVisible()) {
-                    // add and re-hide layer that's been marked invisible
-                    if (highlight) {
-                        this.add(l);
-                    } else {
-                        this.remove(l);
+		try {
+			Layer l = (series2layer != null ? series2layer.get(prop.getName()) : null);
+			if (!prop.isVisible()) {
+				if (highlight) {
+					prop = prop.clone();
+					prop.setLineStyle(DataSeriesProperties.LINESTYLE_STRONG);
+					prop.setLineWidth(5);
+				}
+				if (l == null) {
+				    l = createLayer(prop);
+                    if (l == null) {
+                        return;
                     }
-                }
-                if (highlight) {
-                    l.draw(this.getGraphics());
-                } else {
-                    // if not highlighted, we have to redraw everything, otherwise the strong line will
-                    // not be over-drawn
-                    this.draw();
-                }
-            } catch(Exception e) {
-            }
-        }
+				}
+				// add and re-hide layer that's been marked invisible
+				if (highlight) {
+					this.add(l);
+				} else {
+					this.remove(l);
+				}
+			} else {
+				if (l == null) {
+					return;
+				}
+				double scaleMin = prop.getScaleMin();
+				double scaleMax = prop.getScaleMax();
+				if (scaleMax <= scaleMin) {
+					scaleMax = scaleMin + 1;
+				}
+				CartesianGraph g;
+				if (highlight) {
+					// save original graph (including axis, if appplicable)
+					series2highlightedGraph.put(prop.getName(), (CartesianGraph)l.getGraph());
+					prop = prop.clone();
+					prop.setLineStyle(DataSeriesProperties.LINESTYLE_STRONG);
+					prop.setLineWidth(5);
+					g = createGraph(l, prop, prop.getDisplayName(), scaleMin, scaleMax);
+				} else {
+					// restore original graph (with axis, if applicable)
+					g = series2highlightedGraph.get(prop.getName());
+				}
+				if (g == null) {
+					return;
+				}
+				l.setGraph(g);
+			}
+			if (highlight) {
+				l.draw(this.getGraphics());
+			} else {
+				// if not highlighted, we have to redraw everything, otherwise the strong line
+				// will
+				// not be over-drawn
+				this.draw();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
     
     private CartesianGraph createGraph(Layer l, DataSeriesProperties prop, String name,
@@ -314,6 +337,9 @@ public class GraphPanel extends gov.noaa.pmel.sgt.JPane {
         Range2D yUserRange = new Range2D(scaleMin, scaleMax);
         graph2yUserRange.put(graph,yUserRange);
         
+        Logger.log(Logger.LogType.debug, "createGraph("+prop.getName()+", " + name + "): scaleMin=" + scaleMin + ", scaleMax=" + scaleMax +
+                ", minTs=" + minTs + ", maxTs=" + maxTs + ", myWidth=" + myWidth + ", myHeight=" + myHeight);
+
         gov.noaa.pmel.sgt.LinearTransform xt = new gov.noaa.pmel.sgt.LinearTransform(xPhysRange, xUserRange);
         gov.noaa.pmel.sgt.AxisTransform yt = null;
         switch (prop.getValueAxis()) {

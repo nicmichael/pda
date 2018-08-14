@@ -16,6 +16,7 @@ public class CsvConverter implements Converter {
     
     private static String SEP = ";";
     private static long TOLERANCE = 1000;
+    private static boolean FILL_NULL = false;
     
     private void writeHeader(BufferedWriter f, ArrayList<DataSeries> series) throws IOException {
         StringBuilder s = new StringBuilder();
@@ -32,7 +33,9 @@ public class CsvConverter implements Converter {
         s.append(ts);
         Sample[] samples = series.getSamplesAtTimestamp(false, ts, TOLERANCE, false);
         for (Sample smp : samples) {
-            s.append(SEP + (smp != null ? Double.toString(smp.getValue()) : ""));
+            s.append(SEP +
+                    (smp != null && !Double.isNaN(smp.getValue()) ? Double.toString(smp.getValue()) :
+                    (FILL_NULL ? "0" : "")));
         }
         s.append("\n");
         f.write(s.toString());
@@ -46,7 +49,10 @@ public class CsvConverter implements Converter {
         if (System.getProperty("csv.tolerance") != null && System.getProperty("csv.tolerance").length() > 0) {
             TOLERANCE = Util.string2long(System.getProperty("csv.tolerance"), TOLERANCE);
         }
-        Logger.info("CsvConverter using separator '" + SEP + "' (-Dcsv.sep) and sampling interval tolerance " + TOLERANCE + "ms (-Dcsv.tolerance)");
+        if (System.getProperty("csv.fillnull") != null && System.getProperty("csv.fillnull").toLowerCase().startsWith("y")) {
+            FILL_NULL = true;
+        }
+        Logger.info("CsvConverter using separator '" + SEP + "' (-Dcsv.sep), sampling interval tolerance " + TOLERANCE + "ms (-Dcsv.tolerance)");
 
         String csvFile = filename + ".csv";
         Logger.info("Creating " + csvFile + " with " + series.size() + " series ...");

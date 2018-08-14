@@ -1,5 +1,6 @@
 package de.nmichael.pda.util;
 
+import java.util.Arrays;
 import java.util.Vector;
 
 import de.nmichael.pda.data.DataSeries;
@@ -9,6 +10,36 @@ import de.nmichael.pda.data.Sample;
 import de.nmichael.pda.data.StatisticsData;
 
 public class SeriesStatistics {
+
+	enum SortOrder {
+		unsorted,
+		name,
+		value
+	}
+
+	SortOrder sorting = SortOrder.unsorted;
+
+	class StatSummary implements Comparable {
+		String name;
+		double value;
+
+		public StatSummary(String name, double value) {
+			this.name = name;
+			this.value = value;
+		}
+
+		@Override
+		public int compareTo(Object o) {
+			if (sorting == SortOrder.name) {
+				return name.compareTo(((StatSummary)o).name);
+			}
+			if (sorting == SortOrder.value) {
+				double v = value - ((StatSummary)o).value;
+				return v < 0 ? 1 : v > 0 ? -1 : 0;
+			}
+			return 0;
+		}
+	}
 
     private ProjectItem projectItem;
     private Vector<DataSeriesProperties> vprop;
@@ -39,15 +70,29 @@ public class SeriesStatistics {
     }
 
     public String getStats() {
+        if ("value".equalsIgnoreCase(System.getProperty("stats.sort"))) {
+            sorting = SortOrder.value;
+        }
+        if ("name".equalsIgnoreCase(System.getProperty("stats.sort"))) {
+            sorting = SortOrder.name;
+        }
+
         data = new StringBuilder();
         if (vprop.size() == 0) {
             addLine("No Series Data.");
             return data.toString();
         }
         initHeaderData();
+
+        StatSummary[] summary = new StatSummary[vprop.size()];
         for (int i = 0; i < vprop.size(); i++) {
-            initOneLineSummary(vprop.get(i));
+            summary[i] = getOneLineSummary(vprop.get(i));
         }
+        Arrays.sort(summary);
+        for (int i = 0; i < summary.length; i++) {
+            addLine(String.format("%-80s: %s", summary[i].name, Util.double2string(summary[i].value, 19, 3, false)));
+        }
+
         for (int i = 0; i < vprop.size(); i++) {
             initData(vprop.get(i));
         }
@@ -76,7 +121,7 @@ public class SeriesStatistics {
         addLine("");
     }
     
-    private void initOneLineSummary(DataSeriesProperties prop) {
+    private StatSummary getOneLineSummary(DataSeriesProperties prop) {
         long xFrom = Long.MIN_VALUE;
         long xTo = Long.MAX_VALUE;
         if (projectItem.isScaleXSet()) {
@@ -86,10 +131,9 @@ public class SeriesStatistics {
 
         DataSeries series = prop.getSeries();
         StatisticsData stat = (series != null ? series.getStatisticsData(xFrom, xTo, prop.getSmooth()) : null);
-        
-        if (stat != null && stat.samplesCnt > 0) {
-            addLine(String.format("%-80s: %s", prop.getDisplayName(), Util.double2string(stat.valuesSum/stat.samplesCnt, 19, 3, false)));
-        }
+        StatSummary summary = new StatSummary(prop.getDisplayName(),
+                stat != null && stat.samplesCnt > 0 ? stat.valuesSum/stat.samplesCnt : 0);
+        return summary;
     }
 
     private void initData(DataSeriesProperties prop) {
