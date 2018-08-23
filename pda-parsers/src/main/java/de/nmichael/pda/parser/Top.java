@@ -30,6 +30,8 @@ public class Top extends Parser {
 
     private int minThreshold = 0;
     protected Hashtable<String,String> pid2args = new Hashtable<String,String>();
+    private boolean foundPs = false;
+    private boolean foundJstack = false;
 
     // @Override
     public boolean canHandle(String filename) {
@@ -148,37 +150,92 @@ public class Top extends Parser {
     
     private void getProcessNames() {
         try {
+            // read ps output
             String fname = getFilename().replace("top", "ps");
             if (!Util.isFile(fname)) {
             	if (Util.isFile(fname.replace(".log", ".out"))) {
             		fname = fname.replace(".log", ".out");
             	} else if (Util.isFile(fname.replace(".out", ".log"))) {
             		fname = fname.replace(".out", ".log");
-            	} 
-            }
-            if (!Util.isFile(fname)) {
-            	return;
-            }
-            BufferedReader f = new BufferedReader(new FileReader(fname));
-            String s;
-            // ps -efa format
-            Pattern p1 = Pattern.compile(" *[^ ]+ +([0-9]+) +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +([^ ].*)");
-            while ( (s = f.readLine()) != null) {
-                Matcher m = p1.matcher(s);
-                if (m.matches()) {
-                    String pid = m.group(1);
-                    String args = m.group(2);
-                    pid2args.put(pid, args);
                 }
             }
-            f.close();
+            if (Util.isFile(fname)) {
+                foundPs = true;
+                BufferedReader f = new BufferedReader(new FileReader(fname));
+                String s;
+                // ps -efa format
+                Pattern p1 = Pattern.compile(" *[^ ]+ +([0-9]+) +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +([^ ].*)");
+                while ( (s = f.readLine()) != null) {
+                    Matcher m = p1.matcher(s);
+                    if (m.matches()) {
+                        String pid = m.group(1);
+                        String args = m.group(2);
+                        pid2args.put(pid, args);
+                    }
+                }
+                f.close();
+            }
+
+            // read jstack output
+            fname = getFilename().replace("top", "jstack");
+            if (!Util.isFile(fname)) {
+                if (Util.isFile(fname.replace(".log", ".out"))) {
+                    fname = fname.replace(".log", ".out");
+                } else if (Util.isFile(fname.replace(".out", ".log"))) {
+                    fname = fname.replace(".out", ".log");
+                }
+            }
+            if (Util.isFile(fname)) {
+                foundJstack = true;
+                BufferedReader f = new BufferedReader(new FileReader(fname));
+                String s;
+                // jstack format
+                Pattern p1 = Pattern.compile("\"([^\"]+)\" .* nid=0x([^ ]+) .*");
+                while ( (s = f.readLine()) != null) {
+                    Matcher m = p1.matcher(s);
+                    if (m.matches()) {
+                        String threadName = m.group(1);
+                        String pid = Integer.toString(Integer.parseInt(m.group(2), 16));
+                        pid2args.put(pid, threadName);
+                    }
+                }
+                f.close();
+            }
         } catch (Exception e) {
         }
     }
     
     protected String getCategory(String pid, String user, String name) {
         String args = pid2args.get(pid);
-        return user.trim() + "_" + name.trim(); 
+        return getCategory(pid, user, name, null);
     }
-    
+
+    protected String getCategory(String pid, String user, String name, String[] replaceForName) {
+        String args = pid2args.get(pid);
+        if (args != null) {
+            boolean replace = false;
+            name = name.trim();
+            if (foundJstack && name.equals("java")) {
+                replace = true;
+            }
+            if (!replace && foundPs && replaceForName != null) {
+                for (String r : replaceForName) {
+                    if (name.equals(r)) {
+                        replace = true;
+                        break;
+                    }
+                }
+            }
+
+            if (replace) {
+                int pos = args.lastIndexOf(" ");
+                if (pos > 0) {
+                    args = args.substring(0,  pos).trim();
+                }
+            }
+            return args;
+        }
+        return user.trim() + "_" + name.trim();
+    }
+
 }
