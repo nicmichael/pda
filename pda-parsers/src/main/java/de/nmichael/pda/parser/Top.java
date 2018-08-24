@@ -206,7 +206,6 @@ public class Top extends Parser {
     }
     
     protected String getCategory(String pid, String user, String name) {
-        String args = pid2args.get(pid);
         return getCategory(pid, user, name, null);
     }
 
@@ -232,10 +231,10 @@ public class Top extends Parser {
                 if (pos > 0) {
                     args = args.substring(0,  pos).trim();
                 }
+                return args;
             }
-            return args;
         }
-        return user.trim() + "_" + name.trim();
+        return user.trim() + "_" + name.trim() + (foundJstack ? "_thread" : "");
     }
 
 }
