@@ -215,10 +215,7 @@ public abstract class CLI {
         if (seriesCount > 0) {
             try {
                 Logger.log(Logger.LogType.info, "Parsing all data ...");
-                for (int j = 0; j < item.getParsers().size(); j++) {
-                    Parser p = item.getParsers().getParser(j);
-                    p.parse(false, true);
-                }
+                item.getParsers().parseAll();
                 
                 for (int i=0; i<item.getSeriesProperties().size(); i++) {
                     DataSeriesProperties prop = item.getSeriesProperties().getDataProperties(i);

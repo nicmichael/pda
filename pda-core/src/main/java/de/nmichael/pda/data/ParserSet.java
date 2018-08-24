@@ -11,6 +11,10 @@
 package de.nmichael.pda.data;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import de.nmichael.pda.Logger;
 import de.nmichael.pda.data.*;
@@ -80,6 +84,25 @@ public class ParserSet {
         return parsers.size();
     }
     
+	public void parseAll() {
+		try {
+			ExecutorService executor = Executors
+					.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
+			for (int j = 0; j < size(); j++) {
+				final Parser p = getParser(j);
+				executor.submit(new Runnable() {
+					public void run() {
+						p.parse(false, false);
+					}
+				});
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
     public DataSeries getSeries(String s) {
         String parserName = DataSeries.getParserName(s);
         Parser p = getParser(parserName);

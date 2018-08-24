@@ -364,10 +364,7 @@ public class ProjectItem {
                 
             }
         }
-        for (int j = 0; j < pi.parserSet.size(); j++) {
-            Parser p = pi.parserSet.getParser(j);
-            p.parse(false, false);
-        }
+        pi.parserSet.parseAll();
         pi.getGroups().parseAllUpdate();
 
         return pi;
