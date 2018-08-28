@@ -30,6 +30,7 @@ public class Reporter extends CLI {
         if (report.indexOf(".") < 0) {
             report = report + ".txt";
         }
+        setProjectNameFromOutputName(report);
         Logger.log(Logger.LogType.info, "Writing report " + report + " ...");
         ProjectFile pf = new ProjectFile(prj);
         pf.saveToFile();

@@ -266,6 +266,13 @@ public abstract class CLI {
     	return output;
     }
 
+	protected void setProjectNameFromOutputName(String outName) {
+		int pos;
+		if (outName != null && (pos = outName.lastIndexOf(".")) > 0 && pos + 1 < outName.length()) {
+			prj.setFileName(outName.substring(0, pos) + ".pda");
+		}
+	}
+
     protected static int usage(String error) {
         if (error != null) {
             System.out.println(error);

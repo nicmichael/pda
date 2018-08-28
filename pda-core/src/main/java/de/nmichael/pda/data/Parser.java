@@ -13,6 +13,7 @@ import de.nmichael.pda.Logger;
 import de.nmichael.pda.Parsers;
 import de.nmichael.pda.util.Util;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public abstract class Parser {
     private long tsOffset_hours = 0;
     private long tsOffset_minutes = 0;
     private long tsOffset_secs = 0;
+    private long timeSetFromFile = 0;
     protected final Hashtable<String, String> parameters = new Hashtable<String, String>();
     private String name;
     private FileFormatDescription fileFormatDescription;
@@ -186,17 +188,32 @@ public abstract class Parser {
         setTimestampFromFilename();
     }
     
-    private void setTimestampFromFilename() {
-        if (filename != null) {
-            Pattern p = Pattern.compile(
-                    ".*[^0-9]([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])[^0-9].*");
-            Matcher m = p.matcher(filename);
-            if (m.matches()) {
-                timestamp.set(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), 
-                        Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)), Integer.parseInt(m.group(6)));
-            }
-        }
-    }
+	private void setTimestampFromFilename() {
+		boolean setFromFile = false;
+		logDebug("setTimestampFromFilename()");
+		if (filename != null) {
+			logDebug("setTimestampFromFilename(): " + filename);
+			Pattern p = Pattern.compile(
+					".*[^0-9]([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])([0-9][0-9])[^0-9].*");
+			Matcher m = p.matcher(filename);
+			if (m.matches()) {
+				timestamp.set(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)),
+						Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)), Integer.parseInt(m.group(6)));
+				setFromFile = true;
+			} else {
+				logDebug("setTimestampFromFilename(): get time from file");
+				File f = new File(filename);
+				if (f.exists()) {
+					timestamp.set(f.lastModified(), true);
+					setFromFile = true;
+					logDebug("setTimestampFromFilename(): " + f.lastModified() + " " + timestamp.getTimeStamp());
+				}
+			}
+		}
+		if (setFromFile) {
+			timeSetFromFile = timestamp.getTimeStamp();
+		}
+	}
 
     public void setProjectFilename(String projectFileName) {
         this.projectFileName = projectFileName;
@@ -214,7 +231,11 @@ public abstract class Parser {
                 }
             }
         }
-        timestamp.reset(tsOffset_hours, tsOffset_minutes, tsOffset_secs);
+        if (timeSetFromFile > 0) {
+            timestamp.set(timeSetFromFile, true);
+        } else {
+            timestamp.reset(tsOffset_hours, tsOffset_minutes, tsOffset_secs);
+        }
         boolean success = true;
         try {
             f = new BufferedReader(new FileReader(filename));

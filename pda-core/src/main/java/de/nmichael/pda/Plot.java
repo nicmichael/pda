@@ -58,11 +58,7 @@ public class Plot extends CLI {
             pngname = pngname + ".png";
         }
 		item.setPngFilename(pngname);
-        String prjname = pngname;
-        if (prjname.endsWith(".png")) {
-            prjname = prjname.substring(0, prjname.length() - 3) + "pda";
-        }
-        prj.setFileName(prjname);
+        setProjectNameFromOutputName(pngname);
         GraphPanel graph = new GraphPanel(null, item, width, height);
 		graph.updateGraphPanel();
 		graph.doLayout();
