@@ -17,7 +17,11 @@ public class SeriesStatistics {
 		value
 	}
 
-	SortOrder sorting = SortOrder.unsorted;
+    private ProjectItem projectItem;
+    private Vector<DataSeriesProperties> vprop;
+    private StringBuilder data;
+	private SortOrder sorting = SortOrder.unsorted;
+	private boolean fullSeriesName = false;
 
 	class StatSummary implements Comparable {
 		String name;
@@ -41,10 +45,6 @@ public class SeriesStatistics {
 		}
 	}
 
-    private ProjectItem projectItem;
-    private Vector<DataSeriesProperties> vprop;
-    private StringBuilder data;
-    
     public SeriesStatistics(ProjectItem projectItem, Vector<DataSeriesProperties> vprop) {
         if (vprop == null) {
             vprop = new Vector<DataSeriesProperties>();
@@ -52,8 +52,7 @@ public class SeriesStatistics {
                 vprop.add(projectItem.getSeriesProperties().getDataProperties(i));
             }
         }
-        this.projectItem = projectItem;
-        this.vprop = vprop;
+        initialize(projectItem, vprop);
     }
 
     public SeriesStatistics(ProjectItem projectItem, DataSeriesProperties prop) {
@@ -65,18 +64,22 @@ public class SeriesStatistics {
                 vprop.add(projectItem.getSeriesProperties().getDataProperties(i));
             }
         }
-        this.projectItem = projectItem;
-        this.vprop = vprop;
+        initialize(projectItem, vprop);
     }
 
-    public String getStats() {
+    private void initialize(ProjectItem projectItem, Vector<DataSeriesProperties> vprop) {
+        this.projectItem = projectItem;
+        this.vprop = vprop;
         if ("value".equalsIgnoreCase(System.getProperty("stats.sort"))) {
             sorting = SortOrder.value;
         }
         if ("name".equalsIgnoreCase(System.getProperty("stats.sort"))) {
             sorting = SortOrder.name;
         }
+        fullSeriesName = "full".equalsIgnoreCase(System.getProperty("stats.name"));
+    }
 
+    public String getStats() {
         data = new StringBuilder();
         if (vprop.size() == 0) {
             addLine("No Series Data.");
@@ -131,7 +134,7 @@ public class SeriesStatistics {
 
         DataSeries series = prop.getSeries();
         StatisticsData stat = (series != null ? series.getStatisticsData(xFrom, xTo, prop.getSmooth()) : null);
-        StatSummary summary = new StatSummary(prop.getDisplayName(),
+        StatSummary summary = new StatSummary(fullSeriesName ? prop.getName() : prop.getDisplayName(),
                 stat != null && stat.samplesCnt > 0 ? stat.valuesSum/stat.samplesCnt : 0);
         return summary;
     }

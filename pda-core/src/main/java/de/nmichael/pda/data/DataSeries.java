@@ -100,7 +100,7 @@ public class DataSeries implements Comparable {
 
     public Sample getSample(int i) {
         try {
-            return samples.get(i);
+            return i < samples.size() ? samples.get(i) : null;
         } catch(Exception eoutofbounds) {
             return null;
         }

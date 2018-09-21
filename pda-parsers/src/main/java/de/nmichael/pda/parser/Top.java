@@ -25,8 +25,10 @@ public class Top extends Parser {
     private static final String TOP_RES = "res";
     private static final String TOP_SHR = "shr";
     private static final String TOP_CPU = "cpu";
+    private static final String TOTAL = "Total";
     
     private static Pattern p = Pattern.compile(" *(\\d+) +([^ ]+) +[^ ]+ +[^ ]+ +(\\d+\\.?\\d*[kmgt]?) +(\\d+\\.?\\d*[kmgt]?) +(\\d+\\.?\\d*[kmgt]?) +[^ ]+ +(\\d+\\.?\\d*) +[^ ]+ +[^ ]+ (.+)");
+    private static Pattern pSystem = Pattern.compile("%Cpu.s.: *([0-9\\.]+) us, *([0-9\\\\.]+) sy, *([0-9\\\\.]+) ni, *([0-9\\\\.]+) id,.*");
 
     private int minThreshold = 0;
     protected Hashtable<String,String> pid2args = new Hashtable<String,String>();
@@ -65,6 +67,9 @@ public class Top extends Parser {
     @Override
     public void createAllSeries() {
         getProcessNames();
+        series().addSeries(TOTAL, TOTAL, "usr");
+        series().addSeries(TOTAL, TOTAL, "sys");
+        series().addSeries(TOTAL, TOTAL, "idl");
         try {
             int countP = 0;
             int countL = 0;
@@ -85,6 +90,7 @@ public class Top extends Parser {
                     }
                 }
             }
+            series().setPreferredScaleCategory(TOTAL, 0, 100);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -128,6 +134,14 @@ public class Top extends Parser {
                         if (isNeeded == null) {
                         	needed.put(key, wasNeeded);
                         }
+                    }
+                } else {
+                    m = pSystem.matcher(s);
+                    if (m.matches()) {
+                        long t = getCurrentTimeStamp().getTimeStamp();
+                        series().addSample(TOTAL, TOTAL, "usr", t, Double.parseDouble(m.group(1)));
+                        series().addSample(TOTAL, TOTAL, "sys", t, Double.parseDouble(m.group(2)));
+                        series().addSample(TOTAL, TOTAL, "idl", t, Double.parseDouble(m.group(4)));
                     }
                 }
             }
