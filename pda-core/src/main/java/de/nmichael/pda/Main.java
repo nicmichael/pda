@@ -25,7 +25,7 @@ public class Main {
     public static final String AUTHOR = "Nicolas Michael";
     public static final String HOMEPAGE = "http://pda.nmichael.de";
     public static final String EMAIL = "info@pda.nmichael.de";
-    public static final String COPYRIGHT = "Copyright (c) 2006-18 by " + AUTHOR;
+    public static final String COPYRIGHT = "Copyright (c) 2006-19 by " + AUTHOR;
     public static final String LICENSE = "GNU General Public License v2";
     public static String FILESEP = System.getProperty("file.separator");
     public static String HOMEDIR = System.getProperty("user.home");
@@ -105,6 +105,12 @@ public class Main {
         System.out.println("    PDA [-v] [-Dprop=value] -m files...");
         System.out.println("        -v        verbose");
         System.out.println("        files...  CSV files to merge");
+        System.out.println("");
+        System.out.println("  CSV Grep");
+        System.out.println("    PDA [-v] [-Dprop=value] -g pattern files...");
+        System.out.println("        -v        verbose");
+        System.out.println("        pattern   Regex of series names to grep for");
+        System.out.println("        files...  CSV files to grep from");
     }
     
     private static void getCommandLineArgs(String[] args) {
@@ -145,6 +151,9 @@ public class Main {
             }
             if (args[i].equals("-m")) {
                 System.exit(CsvMerger.merge(args, i+1));
+            }
+            if (args[i].equals("-g")) {
+                System.exit(CsvGrep.grep(args, i+1));
             }
             if (i == args.length-1 || argFname != null) {
                 if (args[i].startsWith("-")) {
