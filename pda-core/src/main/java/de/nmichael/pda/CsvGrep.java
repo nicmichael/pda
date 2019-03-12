@@ -14,12 +14,12 @@ import de.nmichael.pda.util.Util;
 
 public class CsvGrep {
     
-    private static final String SEP = ",";
+    private final String SEP;
+    private final String OUTPUT;
+    private final long TOLERANCE;
 
     private Pattern pattern;
     private String[] files;
-    private String output;
-    private long tolerance = 0;
     private String firstHeader;
     private Hashtable<String,String> allHeaders = new Hashtable<String,String>();
     private Hashtable<String, Hashtable<String,String>> data = new Hashtable<String, Hashtable<String,String>>(); // timestamp -> { key = value }
@@ -27,8 +27,9 @@ public class CsvGrep {
     public CsvGrep(String pattern, String[] files) {
     	this.pattern = Pattern.compile(pattern);
         this.files = files;
-        this.tolerance = Util.string2long(System.getProperty("csv.tolerance"), 0);
-        this.output = System.getProperty("csv.output") != null ? System.getProperty("csv.output") : "pda_grepped_series.csv";
+        this.SEP = System.getProperty("csv.sep") != null ? System.getProperty("csv.sep") : ","; 
+        this.TOLERANCE = Util.string2long(System.getProperty("csv.tolerance"), 0);
+        this.OUTPUT = System.getProperty("csv.output") != null ? System.getProperty("csv.output") : "pda_grepped_series.csv";
     }
     
     private void readFile(String file) {
@@ -118,7 +119,7 @@ public class CsvGrep {
         Arrays.sort(rows);
         String lastrow = null;
         for (String row : rows) {
-            if (lastrow != null && Util.string2long(row, 0) - Util.string2long(lastrow, 0) <= tolerance) {
+            if (lastrow != null && Util.string2long(row, 0) - Util.string2long(lastrow, 0) <= TOLERANCE) {
             	// merge with lastrow
             	Hashtable<String,String> mainRow = data.get(lastrow);
             	Hashtable<String,String> myRow = data.get(row);
@@ -126,7 +127,7 @@ public class CsvGrep {
             		String val = myRow.get(hdr);
             		if (val != null && val.length() > 0) {
             			if (mainRow.get(hdr) != null && mainRow.get(hdr).length() > 0) {
-            				Logger.warning("Tolerance " + tolerance + " replaced value " + mainRow.get(hdr) + " with " + val +
+                            Logger.warning("Tolerance " + TOLERANCE + " replaced value " + mainRow.get(hdr) + " with " + val +
             						" for " + hdr + " at " + row);
             			}
             			mainRow.put(hdr, val);
@@ -144,14 +145,14 @@ public class CsvGrep {
         for (String file : files) {
             readFile(file);
         }
-        if (tolerance > 0) {
+        if (TOLERANCE > 0) {
         	mergeRows();
         }
         String[] myHeaders = allHeaders.keySet().toArray(new String[0]);
         Arrays.sort(myHeaders);
-        Logger.info("Writing grepped data to " + output + " (-Dcsv.output) ... ");
+        Logger.info("Writing grepped data to " + OUTPUT + " (-Dcsv.output) ... ");
         try {
-            BufferedWriter f = new BufferedWriter(new FileWriter(output));
+            BufferedWriter f = new BufferedWriter(new FileWriter(OUTPUT));
             writeHeader(f, myHeaders);
             String[] rows = data.keySet().toArray(new String[0]);
             Arrays.sort(rows);

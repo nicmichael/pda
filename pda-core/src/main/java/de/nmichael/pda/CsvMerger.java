@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 
+import de.nmichael.pda.util.Util;
+
 public class CsvMerger {
     
-    private static final String SEP = ";";
+    private final String SEP;
+    private final String OUTPUT;
+    private final boolean ALLSERIES;
 
     private String[] files;
-    private String output;
-    private boolean useAllSeries;
     private Hashtable<String, String[]> headers = new Hashtable<String, String[]>();
     private Hashtable<String, ArrayList<String[]>> values = new Hashtable<String, ArrayList<String[]>>();
     
@@ -24,9 +26,9 @@ public class CsvMerger {
     
     public CsvMerger(String[] files) {
         this.files = files;
-        this.output = System.getProperty("csv.output") != null ? System.getProperty("csv.output") : "pda_merged_series.csv";
-        this.useAllSeries = System.getProperty("csv.allseries") != null ? System.getProperty("csv.allseries").equalsIgnoreCase("true") : useAllSeries;
-        
+        this.SEP = System.getProperty("csv.sep") != null ? System.getProperty("csv.sep") : ","; 
+        this.OUTPUT = System.getProperty("csv.output") != null ? System.getProperty("csv.output") : "pda_grepped_series.csv";
+        this.ALLSERIES = System.getProperty("csv.allseries") != null ? System.getProperty("csv.allseries").equalsIgnoreCase("true") : false;
     }
     
     private void readFile(String file) {
@@ -82,13 +84,13 @@ public class CsvMerger {
         Logger.info("Found " + allHeaders.size() + " series");
         ArrayList<String> headersList = new ArrayList<String>();
         for (String hdr : allHeaders.keySet()) {
-            if (allHeaders.get(hdr) == files.length || useAllSeries) {
+            if (allHeaders.get(hdr) == files.length || ALLSERIES) {
                 headersList.add(hdr);
             }
         }
         String[] finalHeaders = headersList.toArray(new String[0]);
         Arrays.sort(finalHeaders);
-        Logger.info("Using " + finalHeaders.length + " series (-Dcsv.allseries=" + useAllSeries + ")");
+        Logger.info("Using " + finalHeaders.length + " series (-Dcsv.allseries=" + ALLSERIES + ")");
         return finalHeaders;
     }
     

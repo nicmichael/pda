@@ -117,6 +117,15 @@ public class DataSeriesProperties {
         return name;
     }
     
+    public String getParserFileSeriesName() {
+        try {
+            return getParserName() + "[" + getSeries().getParser().getRelativeFilename() + "]" +
+                   ":" + getSeries().getLocalName();
+        } catch(Exception e) {
+            return getName();
+        }
+    }
+
     public void setDisplayName(String name) {
         this.displayName = name;
         if (name != null) {

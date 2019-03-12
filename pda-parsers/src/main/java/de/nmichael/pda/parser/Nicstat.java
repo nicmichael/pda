@@ -41,7 +41,6 @@ public class Nicstat extends Parser {
     private void createSeries(String category, int offset) {
         for (int i=offset; i<seriesNames.length; i++) {
             DataSeries ser = series().addSeries(category, "", seriesNames[i]);
-            logDebug("createSeries: " + (ser != null ? ser.getName() : "duplicate series: " + category + "::" + seriesNames[i]));
         }
     }
     

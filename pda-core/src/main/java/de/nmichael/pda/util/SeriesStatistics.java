@@ -152,7 +152,7 @@ public class SeriesStatistics {
         
         addLine("");
         addLine("");
-        addLine("Series Statistics for Series: "+prop.getName());
+        addLine("Series Statistics for Series: "+prop.getParserFileSeriesName());
         addLine("================================================================");
         addLine("");
         if (stat != null && stat.samplesCnt > 0) {

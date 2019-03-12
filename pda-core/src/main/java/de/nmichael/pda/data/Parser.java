@@ -118,14 +118,22 @@ public abstract class Parser {
         return filename;
     }
 
+    public String getAbsProjectFileName() {
+        String pname = projectFileName;
+        return (new File(pname)).getAbsolutePath();
+    }
+
     public String getRelativeFilename() {
-        if (projectFileName != null && projectFileName.length() > 0) {
-            String projectDir = Util.getPathOfFile(projectFileName);
+        String absProjectFileName = getAbsProjectFileName();
+        if (absProjectFileName != null && absProjectFileName.length() > 0) {
+            String projectDir = Util.getPathOfFile(absProjectFileName);
             if (projectDir != null && projectDir.length() >0 && 
-                filename.startsWith(projectDir) && filename.length() > projectFileName.length()) {
+                filename.startsWith(projectDir) && filename.length() > projectDir.length()) {
                 String relativeName = filename.substring(projectDir.length());
                 String filesep = System.getProperty("file.separator");
-                if (relativeName.startsWith(relativeName) && relativeName.length() > 1) {
+                if (relativeName.startsWith("." + filesep) && relativeName.length() > 2) {
+                    relativeName = relativeName.substring(2);
+                } else if (relativeName.startsWith(filesep) && relativeName.length() > 1) {
                     relativeName = relativeName.substring(1);
                 }
                 return relativeName;
