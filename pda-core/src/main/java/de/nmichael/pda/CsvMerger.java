@@ -129,9 +129,9 @@ public class CsvMerger {
             Logger.error("No headers found.");
             return 1;
         }
-        Logger.info("Writing merged data to " + output + " (-Dcsv.output) ... ");
+        Logger.info("Writing merged data to " + OUTPUT + " (-Dcsv.output) ... ");
         try {
-            BufferedWriter f = new BufferedWriter(new FileWriter(output));
+            BufferedWriter f = new BufferedWriter(new FileWriter(OUTPUT));
             writeHeader(f);
             for (String file : files) {
                 writeData(f, file);
