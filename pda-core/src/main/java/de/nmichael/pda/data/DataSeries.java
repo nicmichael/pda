@@ -118,6 +118,7 @@ public class DataSeries implements Comparable {
     }
 
     public void setParsed(boolean parsed) {
+        //Logger.debug("setParsed(" + parsed + "): " + getName());
         this.parsed = parsed;
     }
 
@@ -221,6 +222,7 @@ public class DataSeries implements Comparable {
     }
 
     public void clearSamples() {
+        //Logger.debug("clearSamples(): " + getName());
         samples = new ArrayList<Sample>();
         parsed = false;
     }

@@ -74,6 +74,11 @@ public abstract class Parser {
         initialize(name);
     }
 
+    public static boolean canHandle(String filename, Pattern pattern) {
+        String name = Util.getNameOfFile(filename);
+        return (name != null && pattern.matcher(name).matches());
+    }
+
     public static boolean canHandle(String filename, String search) {
         String name = Util.getNameOfFile(filename);
         return (name != null && name.indexOf(search) >= 0);
