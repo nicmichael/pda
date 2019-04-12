@@ -34,9 +34,9 @@ cd $DIR/deploy || exit 1
 echo "Deploying PDA to `pwd`/pda ..."
 unzip $DIR//pda-core/target/pda-core.zip || exit 1
 unzip $DIR/pda-parsers/target/pda-parsers.zip || exit 1
-for p in $parsers
+for lib in `find $DIR/plugins -name \*.jar`
 do
-  cp $p/target/*.jar pda/lib/ || exit 1
+  cp -u $lib pda/lib/
 done
 
 echo "PDA deployed to `pwd`/pda"
