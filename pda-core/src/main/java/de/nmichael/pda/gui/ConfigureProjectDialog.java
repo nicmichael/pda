@@ -173,12 +173,11 @@ public class ConfigureProjectDialog extends BaseDialog {
         });
         seriesAddPanel.add(configureGroupsButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
-        seriesInnerPanel.add(seriesAddPanel, BorderLayout.NORTH);
         
         // Series Panel
         seriesScrollPane.setMinimumSize(new Dimension(1000,250));
         seriesScrollPane.setPreferredSize(new Dimension(maxWidth-200,maxHeight/2));
-        seriesInnerPanel.add(seriesScrollPane, BorderLayout.SOUTH);
+        seriesInnerPanel.add(seriesScrollPane, BorderLayout.CENTER);
         mainPanel.add(seriesPanel, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(10, 10, 10, 10), 0, 0));
     }
@@ -339,10 +338,7 @@ public class ConfigureProjectDialog extends BaseDialog {
             seriesPanel.add(moveDownButton, new GridBagConstraints(6, i, 1, 1, 0.0, 0.0,
                     GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
         }
-        JPanel innerPanel = new JPanel(new BorderLayout());
-        innerPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-        innerPanel.add(seriesPanel, BorderLayout.NORTH);
-        seriesScrollPane.getViewport().setView(innerPanel);
+        seriesScrollPane.getViewport().setView(seriesPanel);
     }
     
     void updateDataPanel() {
