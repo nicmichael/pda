@@ -122,7 +122,7 @@ public class ConfigureGroupsDialog extends BaseDialog {
         configurePanel.setLayout(new BorderLayout());
         
         functionPanel.setLayout(new GridBagLayout());
-        functionLabel.setText("Vallue Aggregate Function: ");
+        functionLabel.setText("Value Aggregation Function: ");
         functionLabel.setDisplayedMnemonic('f');
         functionLabel.setLabelFor(function);
         for (int i=0; i<DataSeriesGroup.FUNCTIONS.length; i++) {

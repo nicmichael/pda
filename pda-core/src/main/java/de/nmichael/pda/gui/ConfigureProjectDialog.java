@@ -36,6 +36,7 @@ public class ConfigureProjectDialog extends BaseDialog {
     private JPanel parserPanel = null;
     private JScrollPane seriesScrollPane = new JScrollPane();
     private JPanel seriesPanel = null;
+    private boolean showSelectSeriesDialog = false;
     
     // dimensions
     int maxWidth;
@@ -389,12 +390,21 @@ public class ConfigureProjectDialog extends BaseDialog {
         Parser dataSet = dlg.getSelectedParser();
         if (dataSet != null) {
             dataSet.setFilename(f);
-            dataSet.getAllSeriesNames(true);
+            dataSet.getParseTask(this).execute();
             projectItem.getParsers().addParser(dataSet);
-            updateDataPanel();
         }
     }
-    
+
+    @Override
+    public void progressDone() {
+        if (showSelectSeriesDialog) {
+            showSelectSeriesDialog = false;
+            SelectSeriesDialog dlg = new SelectSeriesDialog(this, projectItem);
+            dlg.showDialog();
+        }
+        updateDataPanel();
+    }
+
     void configureParser(Parser parser) {
         ConfigureParserDialog dlg = new ConfigureParserDialog(this,parser);
         dlg.showDialog();
@@ -417,10 +427,12 @@ public class ConfigureProjectDialog extends BaseDialog {
             if (projectItem.getParsers().size() == 0) {
                 return;
             }
+            showSelectSeriesDialog = true;
+        } else {
+            SelectSeriesDialog dlg = new SelectSeriesDialog(this, projectItem);
+            dlg.showDialog();
+            updateDataPanel();
         }
-        SelectSeriesDialog dlg = new SelectSeriesDialog(this, projectItem);
-        dlg.showDialog();
-        updateDataPanel();
     }
         
     void configureSeries(DataSeriesProperties p) {

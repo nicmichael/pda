@@ -11,6 +11,7 @@ package de.nmichael.pda.data;
 
 import de.nmichael.pda.Logger;
 import de.nmichael.pda.Parsers;
+import de.nmichael.pda.gui.BaseDialog;
 import de.nmichael.pda.util.Util;
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +23,11 @@ import java.util.Hashtable;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.JDialog;
+import javax.swing.ProgressMonitor;
+import javax.swing.SwingWorker;
+
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -68,7 +74,8 @@ public abstract class Parser {
     private TimeStamp timestamp;
     private DataSeriesSet seriesSet;
     private Pattern newSamplesHeader;
-    private Hashtable<Pattern,SeriesName> patterns = new Hashtable<Pattern,SeriesName>(); 
+    private Hashtable<Pattern,SeriesName> patterns = new Hashtable<Pattern,SeriesName>();
+    private ProgressMonitor progressBar;
 
     public Parser(String name) {
         initialize(name);
@@ -315,6 +322,35 @@ public abstract class Parser {
         } catch (Exception eignore) {
         }
         return null;
+    }
+
+    public SwingWorker getParseTask(final BaseDialog dlg) {
+        progressBar = new ProgressMonitor(dlg, "Reading data ...", "", 0, getMaxProgress());
+        return new SwingWorker<Void, Void>() {
+            @Override
+            public Void doInBackground() {
+                getAllSeriesNames(true);
+                return null;
+            }
+
+            @Override
+            public void done() {
+                progressBar.setProgress(progressBar.getMaximum());
+                dlg.progressDone();
+                progressBar = null;
+            }
+        };
+    }
+
+    protected void setProgress(int value, String note) {
+        if (progressBar != null) {
+            progressBar.setNote(note);
+            progressBar.setProgress(value);
+        }
+    }
+
+    protected int getMaxProgress() {
+        return 100;
     }
 
     protected String readLine() {

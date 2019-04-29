@@ -342,4 +342,8 @@ public abstract class BaseDialog extends JDialog {
             return description;
         }
     }
+
+    public void progressDone() {
+    }
+
 }
