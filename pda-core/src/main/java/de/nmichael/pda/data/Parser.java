@@ -265,6 +265,7 @@ public abstract class Parser {
         }
         try {
             logDebug(getName() + " parsing data ...");
+            getCurrentTimeStamp().reset();
             parse();
             for (DataSeries s : series().getAllSeries()) {
                 if ( (s.isUsed() && !s.isParsed()) || s.getNumberOfSamples() > 0 ) {

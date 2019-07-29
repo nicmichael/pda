@@ -24,11 +24,14 @@ public class TimeStamp {
     private static final int TIMESTAMP_MATCHING_ATTEMPTS = 10;
 
     public enum Fields {
-        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, ampm, weekday
+        year, month, day, hour, minute, second, ms, nameOfMonth, unixms, unixsec, ampm, weekday, secSinceStart
     }
 
     // Current Timestamp
     private int YY, MM, DD, hh, mm, ss, ms;
+
+    // Absolute Timestamp (for relative times)
+    private long absTimestamp = 0;
 
     // Have we ever found any timestamps in this file, or is this a timestamp-less
     // file?
@@ -48,6 +51,11 @@ public class TimeStamp {
     public TimeStamp(long offHH, long offMM, long offSS) {
         initializePatterns();
         reset(offHH, offMM, offSS);
+    }
+
+    public void reset() {
+        numberOfTimestampsFound = 0;
+        numberOfHeadersFound = 0;
     }
 
     public void reset(long offHH, long offMM, long offSS) {
@@ -194,6 +202,7 @@ public class TimeStamp {
                 }
 
                 numberOfTimestampsFound++;
+                boolean absolute = true;
                 for (int g = 0; g < m.groupCount(); g++) {
                     if (g < fields.length) {
                         switch (fields[g]) {
@@ -266,6 +275,11 @@ public class TimeStamp {
                             patternWithDay = true;
                             complete = true;
                             break;
+                        case secSinceStart:
+                            double secs = Double.parseDouble(m.group(g + 1));
+                            setRelative((long)(secs * 1000.0));
+                            absolute = false;
+                            break;
                         }
                     }
                 }
@@ -297,6 +311,10 @@ public class TimeStamp {
                     setMatched(i);
                 }
                 
+                if (absolute) {
+                    absTimestamp = getTimeStamp();
+                }
+
                 //if (Logger.isDebugLoggin()) {
                 //    Logger.log(LogType.debug, "Found time " + Util.getTimeString(getTimeStamp()) + " using " + getTimeStampPattern(i) + " in line: " + s);
                 //}
@@ -324,10 +342,26 @@ public class TimeStamp {
     }
 
     public void set(long timestamp) {
-        set(timestamp, false);
+        set(timestamp, false, true);
+    }
+
+    public void setRelative(long timestamp) {
+        set(timestamp, false, false);
     }
 
     public void set(long timestamp, boolean utc) {
+        set(timestamp, utc, true);
+    }
+
+    public void set(long timestamp, boolean utc, boolean absolute) {
+        if (absolute) {
+            absTimestamp = timestamp;
+        } else {
+            if (absTimestamp == 0) {
+                absTimestamp = getTimeStamp();
+            }
+            timestamp += absTimestamp;
+        }
         Calendar cal = (utc ? new GregorianCalendar(TimeZone.getTimeZone("UTC")) : new GregorianCalendar());
         cal.setTimeInMillis(timestamp);
         DD = cal.get(Calendar.DAY_OF_MONTH);

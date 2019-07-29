@@ -48,6 +48,8 @@ public class Csv extends Parser {
                 new Fields[] { Fields.unixms });
         getCurrentTimeStamp().addTimeStampPattern("Unix TS", Pattern.compile("(\\d+)"),
                 new Fields[] { Fields.unixsec });
+        getCurrentTimeStamp().addTimeStampPattern("Seconds since start", Pattern.compile("(\\d+\\.?\\d*)"),
+                new Fields[] { Fields.secSinceStart });
     }
 
     private static String getDelimiter(String s, String[] delims) {
