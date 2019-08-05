@@ -25,6 +25,8 @@ public class Iostat extends Parser {
     private static final String IO_ACTV     = "actv";
     private static final String IO_WSVCT    = "wsvc_t";
     private static final String IO_ASVCT    = "asvc_t";
+    private static final String IO_RAWAIT   = "r_await";
+    private static final String IO_WAWAIT   = "w_await";
     private static final String IO_PCTW     = "%w";
     private static final String IO_PCTB     = "%b";
     private static final String IO_KBPR     = "kb/r";
@@ -138,6 +140,8 @@ public class Iostat extends Parser {
                         if (m.matches()) {
                             isLinux = true;
                             createSeries(CATEGORY_DISK, m.group(1));
+                            series().getOrAddSeries(CATEGORY_DISK, m.group(1), IO_RAWAIT);
+                            series().getOrAddSeries(CATEGORY_DISK, m.group(1), IO_WAWAIT);
                         }
                     }
                 }
@@ -273,6 +277,8 @@ public class Iostat extends Parser {
                                 values[12] = (values[1] > 10 ? values[7] : 0);  // asvc_t only for active (write) LUNs
                                 values[13] = values[0] + values[1];
                                 addSamples(CATEGORY_DISK, m.group(1), t, values);
+                                series().getOrAddSeries(CATEGORY_DISK, m.group(1), IO_RAWAIT).addSampleIfNeeded(t, Float.parseFloat(m.group(11)));
+                                series().getOrAddSeries(CATEGORY_DISK, m.group(1), IO_WAWAIT).addSampleIfNeeded(t, Float.parseFloat(m.group(12)));
                                 for (int i = 0; i < values.length; i++) {
                                     allvalues[i] += values[i];
                                 }
