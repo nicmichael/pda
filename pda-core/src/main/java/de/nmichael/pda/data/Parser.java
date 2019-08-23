@@ -621,15 +621,8 @@ public abstract class Parser {
         if (p == null) {
             return null;
         }
-        e = ProjectFile.getChildNode(parserElement, XML_FILENAME);
-        if (e != null) {
-            p.setFilename(e.getTextContent().trim(), projectFileName);
-            p.getAllSeriesNames(true);
-        }
-        e = ProjectFile.getChildNode(parserElement, XML_NAME);
-        if (e != null) {
-            p.setName(e.getTextContent().trim());
-        }
+
+        // before doing anything else: configure the parser
         NodeList nl = parserElement.getChildNodes();
         for (int i = 0; nl != null && i < nl.getLength(); i++) {
             Node n = nl.item(i);
@@ -643,6 +636,16 @@ public abstract class Parser {
                     }
                 }
             }
+        }
+
+        e = ProjectFile.getChildNode(parserElement, XML_FILENAME);
+        if (e != null) {
+            p.setFilename(e.getTextContent().trim(), projectFileName);
+            p.getAllSeriesNames(true);
+        }
+        e = ProjectFile.getChildNode(parserElement, XML_NAME);
+        if (e != null) {
+            p.setName(e.getTextContent().trim());
         }
         return p;
     }

@@ -76,6 +76,7 @@ public class Csv extends Parser {
         if (s != null) {
             s = s.trim();
             myDelimiter = getDelimiter(s, new String[] { delimiter, ";", ",", "|" });
+            logInfo("Using delimiter: " + myDelimiter + " (configured delimiter: " + delimiter + ")");
             if (s.indexOf("\"") >= 0) {
                 Pattern p = Pattern.compile("\"([^\"]+)\"");
                 Matcher m;
