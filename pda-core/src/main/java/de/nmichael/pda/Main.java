@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class Main {
     
-    public static final String VERSIONID = "2.1.1_03";
+    public static final String VERSIONID = "2.1.1_04";
     
     public static final String PROGRAM = "Performance Data Analyzer";
     public static final String PROGRAMSHORT = "PDA";
@@ -25,7 +25,7 @@ public class Main {
     public static final String AUTHOR = "Nicolas Michael";
     public static final String HOMEPAGE = "http://pda.nmichael.de";
     public static final String EMAIL = "info@pda.nmichael.de";
-    public static final String COPYRIGHT = "Copyright (c) 2006-19 by " + AUTHOR;
+    public static final String COPYRIGHT = "Copyright (c) 2006-20 by " + AUTHOR;
     public static final String LICENSE = "GNU General Public License v2";
     public static String FILESEP = System.getProperty("file.separator");
     public static String HOMEDIR = System.getProperty("user.home");
@@ -35,7 +35,8 @@ public class Main {
     public static ConfigFile config = null;
     public static boolean isGUI = true;
     
-    private static String argFname = null;
+    private static String argPrjFile = null;
+    private static String argDataFile = null;
     
     private static void startGUI() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -45,8 +46,17 @@ public class Main {
         frame.setLocation(0,0);
         frame.setVisible(true);
 
-        if (argFname != null) {
-            frame.openProject(argFname);
+        if (argPrjFile != null) {
+            frame.openProject(argPrjFile);
+        }
+        if (argDataFile != null) {
+            Project prj = frame.createNewProject();
+            String path = Util.getPathOfFile(argDataFile);
+            prj.setFileName(path + Util.getFileSep() + "project.pda");
+            Parser p = Parsers.getParserForFile(argDataFile);
+            if (p != null) {
+                prj.getProjectItem(0).addParser(p);
+            }
         }
     }
     
@@ -61,9 +71,10 @@ public class Main {
         System.out.println("Usage:");
         System.out.println("");
         System.out.println("  Interactive GUI");
-        System.out.println("    PDA [-v] [-Dprop=value] [file]");
+        System.out.println("    PDA [-v] [-Dprop=value] [-f file] [prjfile]");
         System.out.println("        -v        verbose");
-        System.out.println("        file      project file to open");
+        System.out.println("        -f file   file to open");
+        System.out.println("        prjfile   project file to open");
         System.out.println("");
         System.out.println("  Graph Plotting");
         System.out.println("    PDA [-v] [-Dprop=value] -p -f files... -s series... [-x start] [-y end] [-o name] [-d dim]");
@@ -155,12 +166,16 @@ public class Main {
             if (args[i].equals("-g")) {
                 System.exit(CsvGrep.grep(args, i+1));
             }
-            if (i == args.length-1 || argFname != null) {
+            if (args[i].equals("-f") && i + 1 < args.length) {
+                argDataFile = args[++i];
+                continue;
+            }
+            if (i == args.length-1 || argPrjFile != null) {
                 if (args[i].startsWith("-")) {
                     showHelp();
                     System.exit(1);
                 }
-                argFname = args[i];
+                argPrjFile = args[i];
             }
         }
     }

@@ -407,4 +407,8 @@ public class Util {
         return s.toString();
     }
     
+    public static String getFileSep() {
+        return System.getProperty("file.separator");
+    }
+
 }

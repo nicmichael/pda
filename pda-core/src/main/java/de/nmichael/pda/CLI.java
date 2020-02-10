@@ -128,44 +128,9 @@ public abstract class CLI {
         prj.addProjectItem(item);
         
         for (String file : files) {
-            String fname = file;
-            String pname = null;
-            if (fname.indexOf("@") > 0) {
-                int pos = fname.indexOf("@");
-                fname = file.substring(0, pos);
-                pname = file.substring(pos+1);
-            }
-            if (!(new File(fname)).exists()) {
-                Logger.log(Logger.LogType.error, "File '" + fname + "' not found.");
-                continue;
-            }
-            if (pname == null || pname.length() == 0) {
-                for (int pi=0; pi<Parsers.getNumberOfParsers(); pi++) {
-                    try {
-                        Parser p = (Parser)Class.forName(Parsers.getParserName(pi)).newInstance();
-                        if (p.canHandle(fname)) {
-                            pname = Parsers.getParserName(pi);
-                            break;
-                        }
-                    } catch(Exception e) {
-                    }
-                }
-            }
-            if (pname == null || pname.length() == 0) {
-                Logger.log(Logger.LogType.error, "No parser found or configured for file: " + fname);
-                continue;
-            }
-            try {
-                Logger.log(Logger.LogType.info, "Using parser '" + pname + "' for file '" + fname + "' ...");
-                Parser p = Parsers.createParser(pname);
-                if (p == null) {
-                    continue;
-                }
-                p.setFilename(fname);
-                p.getAllSeriesNames(true);
+            Parser p = Parsers.getParserForFile(file);
+            if (p != null) {
                 item.addParser(p);
-            } catch (Exception e) {
-                Logger.log(Logger.LogType.error, "Could not instantiate parser '" + pname +"' for file: " + fname + ": " + e.toString());
             }
         }
         

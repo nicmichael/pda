@@ -146,6 +146,48 @@ public class Parsers {
     public static String getParserName(int i) {
         if (parsers == null || i < 0 || i >= parsers.size()) return null;
         return (String)parsers.get(i);
-    } 
+    }
+
+    public static Parser getParserForFile(String file) {
+        String fname = file;
+        String pname = null;
+        if (fname.indexOf("@") > 0) {
+            int pos = fname.indexOf("@");
+            fname = file.substring(0, pos);
+            pname = file.substring(pos+1);
+        }
+        if (!(new File(fname)).exists()) {
+            Logger.log(Logger.LogType.error, "File '" + fname + "' not found.");
+            return null;
+        }
+        if (pname == null || pname.length() == 0) {
+            for (int pi=0; pi<Parsers.getNumberOfParsers(); pi++) {
+                try {
+                    Parser p = (Parser)Class.forName(Parsers.getParserName(pi)).newInstance();
+                    if (p.canHandle(fname)) {
+                        pname = Parsers.getParserName(pi);
+                        break;
+                    }
+                } catch(Exception e) {
+                }
+            }
+        }
+        if (pname == null || pname.length() == 0) {
+            Logger.log(Logger.LogType.error, "No parser found or configured for file: " + fname);
+            return null;
+        }
+        try {
+            Logger.log(Logger.LogType.info, "Using parser '" + pname + "' for file '" + fname + "' ...");
+            Parser p = Parsers.createParser(pname);
+            if (p != null) {
+                p.setFilename(fname);
+                p.getAllSeriesNames(true);
+            }
+            return p;
+        } catch (Exception e) {
+            Logger.log(Logger.LogType.error, "Could not instantiate parser '" + pname +"' for file: " + fname + ": " + e.toString());
+        }
+        return null;
+    }
     
 }

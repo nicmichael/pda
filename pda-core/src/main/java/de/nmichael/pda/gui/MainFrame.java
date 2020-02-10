@@ -770,10 +770,11 @@ public class MainFrame extends JFrame {
         openProject(fname);
     }
 
-    public void createNewProject() {
+    public Project createNewProject() {
         project = new Project();
         project.addProjectItem(new ProjectItem(ProjectItem.Type.graph));
         projectItem = project.getProjectItem(0);
+        return project;
     }
 
     public void openProject(String fname) {
@@ -781,6 +782,26 @@ public class MainFrame extends JFrame {
         Main.config.setWorkdirProject(Util.getPathOfFile(fname));
 
         project.setFileName(fname);
+        if (project.loadFromFile()) {
+            if (project.size() == 0) {
+                project.addProjectItem(new ProjectItem(ProjectItem.Type.graph));
+            }
+            projectItem = project.getProjectItem(0);
+            updateTitle();
+            updateDisplay();
+            setLabels();
+        } else {
+            BaseDialog.errorDlg(this, "Loading failed.");
+        }
+
+    }
+
+    public void openProject(Project p) {
+        project = p;
+        if (p.getFileName() != null) {
+            Main.config.setWorkdirProject(Util.getPathOfFile(p.getFileName()));
+        }
+
         if (project.loadFromFile()) {
             if (project.size() == 0) {
                 project.addProjectItem(new ProjectItem(ProjectItem.Type.graph));

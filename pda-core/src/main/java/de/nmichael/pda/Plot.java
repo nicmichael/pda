@@ -52,21 +52,21 @@ public class Plot extends CLI {
 
     @Override
     public boolean run() throws Exception {
-		Logger.log(Logger.LogType.info, "Plotting " + getSeriesCount() + " series ...");
+	Logger.log(Logger.LogType.info, "Plotting " + getSeriesCount() + " series ...");
         String pngname = getOutputName() != null ? getOutputName() : "plot.png";
         if (pngname.indexOf(".") < 0) {
             pngname = pngname + ".png";
         }
-		item.setPngFilename(pngname);
+	item.setPngFilename(pngname);
         setProjectNameFromOutputName(pngname);
         GraphPanel graph = new GraphPanel(null, item, width, height);
-		graph.updateGraphPanel();
-		graph.doLayout();
-		Logger.log(Logger.LogType.info, "Writing image " + pngname + " [" + width + "x" + height + "] ...");
-		graph.saveImageToFile(pngname);
-		ProjectFile pf = new ProjectFile(prj);
-		pf.saveToFile();
-		return true;
+	graph.updateGraphPanel();
+	graph.doLayout();
+	Logger.log(Logger.LogType.info, "Writing image " + pngname + " [" + width + "x" + height + "] ...");
+	graph.saveImageToFile(pngname);
+	ProjectFile pf = new ProjectFile(prj);
+	pf.saveToFile();
+	return true;
     }
 
 }
